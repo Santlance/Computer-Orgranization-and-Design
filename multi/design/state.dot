@@ -1,0 +1,33 @@
+digraph G {
+    splines=polyline;
+    subgraph{rank=same;S0};
+    subgraph{rank=same;S1};
+    subgraph{rand=same;S2,S4,S7,S9,S10,S11};
+    subgraph{rank=same;S3,S5,S6,S8,S12};
+    S0[label="Reset all signals\nIRWrite=1\nPCWrite=0",xlabel="S0:Inst Fectch"];
+    S1[label="",xlabel="S1:Decode"];
+    S0->S1;
+    
+    S1->S2[label="R-Type"];
+    S2[label="ALUSrc=0\nALUCtrl\nALUASrc",xlabel="S2"];
+    S2->S3;
+    S3[label="RegDst=1\nRegWrite=1\nPCWrite=1",xlabel="S3"];
+    S1->S4[label="Load/Save"];
+    S4[label="ALUSrc=1\nALUCtrl=ADD\nDataType",xlabel="S4"];
+    S4->S5[label="Load"];
+    S5[label="RegDst=0\nMemtoReg=1\nRegWrite=1\nPCWrite=1",xlabel="S5"];
+    S6[label="MemWrite=1\nPCWrite=1",xlabel="S6"];
+    S4->S6[label="Save"];
+    S1->S7[label="I-Type"];
+    S7[label="ALUSrc=1\nALUCtrl\nExtend\n",xlabel="S7"];
+    S7->S8;
+    S8[label="RegDst=0\nRegWrite=1\nPCWrite=1",xlabel="S8"];
+    S1->S9[label="Branch"];
+    S9[label="Branch=1\nBranchOp\nPCWrite=1",xlabel="S9"];
+    S1->S10[label="j/jr"];
+    S10[label="Jump\nJump_R\nPCWrite=1",xlabel="S10"];
+    S1->S11[label="jal/jalr"];
+    S11[label="Jump\nLink\n",xlabel="S11"];
+    S11->S12;
+    S12[label="RegWrite\nPCWrite=1",xlabel="S12"];
+}

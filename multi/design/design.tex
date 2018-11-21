@@ -1,0 +1,783 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{cite}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{txfonts}
+\usepackage{extarrows}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{diagbox}
+\usepackage{threeparttable}
+\usepackage{caption}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{colortbl}
+\usepackage{fontspec}
+\usepackage{listings}
+\usepackage{mips}
+\usepackage{fancybox}
+\usepackage[super,square]{natbib}
+\usepackage{multirow}
+
+\pagestyle{myheadings}
+
+\makeatletter
+\newenvironment{CenteredBox}{% 
+\begin{Sbox}}{% Save the content in a box
+\end{Sbox}\centerline{\parbox{\wd\@Sbox}{\TheSbox}}}% And output it centered
+\makeatother
+
+\definecolor{vgreen}{RGB}{104,180,104}
+\definecolor{vblue}{RGB}{49,49,255}
+\definecolor{vorange}{RGB}{255,143,102}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{lstrule}{RGB}{20,20,20}
+
+\newfontfamily\courier{Courier New}
+\lstdefinestyle{mips-style}
+{ 
+	language=[mips]Assembler,       % the language of the code
+	numbers=left,
+	numberstyle=\small\courier,
+	basicstyle=\small\courier,
+	frame=shadowbox,
+	breaklines=true,
+	rulesepcolor=\color{lstrule},
+	xleftmargin=5em
+}
+
+\lstdefinestyle{verilog-style}
+{
+    language=Verilog,
+    basicstyle=\small\courier,
+    keywordstyle=\color{vblue},
+    identifierstyle=\color{black},
+    commentstyle=\color{vgreen},
+    tabsize=8,
+    moredelim=*[s][\colorIndex]{[}{]},
+	literate=*{:}{:}1,
+	frame=shadowbox,
+	breaklines=true,
+	rulesepcolor=\color{lstrule},
+	xrightmargin=30em
+}
+
+\captionsetup[table]{singlelinecheck = false,justification=raggedleft}
+\setmainfont{Times New Roman}
+\definecolor{mypink}{rgb}{.99,.91,.95}
+\geometry{left=0.3cm,right=2cm,top=2.5cm,bottom=2cm}
+\setlength{\parindent}{2em}
+\addtolength{\parskip}{-.4em}
+\title{\textbf{P5设计文档}}
+\author{伦泽标}
+\date{\today}
+\begin{document}
+
+
+\null
+\nointerlineskip
+\vfill
+\let\snewpage \newpage
+\let\newpage \relax
+\maketitle
+\let \newpage \snewpage
+\vfill
+\break
+\section{Instruction Set}
+\begin{table}[H]
+	\begin{threeparttable}
+		\caption{现已支持的指令}
+		\begin{tabular}{cccl}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Inst} & \textbf{Part}                            & \textbf{Value}                & \textbf{Comment}                                        \\
+			\midrule
+			addu          & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6b'100001 & rd$\leftarrow$rs+rt without overflow                    \\
+			\midrule
+			addiu         & {Op[6],rs[5],rt[5],imm[16]}              & Op=6'b001001                  & rt$\leftarrow$rs+sign\_extend(imm) without overflow     \\
+			\midrule
+			subu          & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6b'100011 & rd$\leftarrow$rs-rt without overflow                    \\
+			\midrule
+			and           & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6'b100100 & rd$\leftarrow$rs \& rt                                  \\
+			\midrule
+			andi          & {Op[6],rs[5],rt[5],imm[16]}              & Op=6'b001100                  & rt$leftarrow$rs \& zero\_extend(imm)                    \\
+			\midrule
+			or            & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6'b100101 & rd$\leftarrow$rs|rt                                     \\
+			\midrule
+			ori           & {Op[6],rs[5],rt[5],imm[16]}              & Op=6'b001101                  & rt$\leftarrow$rs | zero\_extend(imm)                    \\
+			\midrule
+			lw            & {Op[6],base[5],rt[5],offset[16]}         & Op=6'b100011                  & rt$\leftarrow$memory[base+offset], sign\_extend(offset) \\
+			\midrule
+			sw            & {Op[6],base[5],rt[5],offset[16]}         & Op=6'b101011                  & memory[base+offset]$\leftarrow$rt, sign\_extend(offset) \\
+			\midrule
+			lh            & {Op[6],base[5],rt[5],imm[16]}            & Op=6'b100001                  & select with Addr[1], addr[0] should be 0                \\
+			\midrule
+			lhu           & {Op[6],base[5],rt[5],imm[16]}            & Op=6'b100101                  & select with Addr[1], addr[0] should be 0, unsigned      \\
+			\midrule
+			sh            & {Op[6],base[5],rt[5],imm[16]}            & Op=6'b101001                  & select with Addr[1], addr[0] should be 0                \\
+			\midrule
+			lb            & {Op[6],base[5],rt[5],imm[16]}            & Op=6'b100000                  & select with Addr[1:0]                                   \\
+			\midrule
+			lbu           & {Op[6],base[5],rt[5],imm[16]}            & Op=6'b100100                  & select with Addr[1:0], unsigned                         \\
+			\midrule
+			sb            & {Op[6],base[5],rt[5],imm[16]}            & Op=6'b101000                  & select with Addr[1:0]                                   \\
+			\midrule
+			beq           & {Op[6],rs[5],rt[5],offset[16]}           & Op=6'b000100                  & rs==rt, sign\_extend(offset)<<2                         \\
+			\midrule
+			bne           & {Op[6],rs[5],rt[5],offset[16]}           & Op=6'b000101                  & rs$\neq$rt,sign\_extend(offset)<<2                      \\
+			\midrule
+			bgtz          & {Op[6],rs[5],00000,offset[16]}           & Op=6'b000111                  & rs>0, sign\_extend(offset)<<2                           \\
+			\midrule
+			blez          & {Op[6],rs[5],00000,offset[16]}           & Op=6'b000110                  & rs$\leq$0, sign\_extend(offset)<<2                      \\
+			\midrule
+			bgez          & {Op[6],rs[5],rt[5],offset[16]}           & Op=6'b000001, rt=5'b00001     & rs$\geq$0, sign\_extend(offset)<<2                      \\
+			\midrule
+			bltz          & {Op[6],rs[5],rt[5],offset[16]}           & Op=6'b000001, rt=5'b00000     & rs<0, sign\_extend(offset)<<2                           \\
+			\midrule
+			lui           & {Op[6],00000,rt[5],imm[16]}              & Op=6'b001111                  & rt$\leftarrow$imm<<16                                   \\
+			\midrule
+			sll           & {Op[6],00000,rt[5],rd[5],s[5],Funct[6]}  & Op=6'b000000, Funct=6'b000000 & rd$\leftarrow$rt<<s                                     \\
+			\midrule
+			sllv          & {Op[6],rs[5],rt[5],rd[5],0*5,Funct}      & Op=6'b000000, Funct=6'b000100 & rd$\leftarrow$rt<<rs[4:0]                               \\
+			\midrule
+			sra           & {Op[6],0*5,rt[5],rd[5],s[5],Funct}       & Op=6'b000000, Funct=6'b000011 & rd$\leftarrow$rt>>s,arithmetic                          \\
+			\midrule
+			srav          & {Op[6],rs[5],rt[5],rd[5],0*5,Funct[6]}   & Op=6'b000000, Funct=6'b000111 & rd$\leftarrow$rt>>rs[4:0]，arithmetic                   \\
+			\midrule
+			srl           & {Op[6],0*5,rt[5],rd[5],s[5],Funct[6]}    & Op=6'b000000, Funct=6'b000010 & rd$\leftarrow$rt>>s，logic                              \\
+			\midrule
+			srlv          & {Op[6],rs[5],rt[5],rd[5],0*5,Funct[6]}   & Op=6'b000000, Funct=6'b000110 & rd$\leftarrow$rt>>rs[4:0]，logic                        \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\begin{threeparttable}
+		\caption{续上表}
+		\begin{tabular}{cccl}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Inst} & \textbf{Part}                            & \textbf{Value}                & \textbf{Comment}                                                        \\
+			\midrule
+			slt           & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6'b101010 & rd$\leftarrow$rs<rt signed                                              \\
+			\midrule
+			slti          & {Op[6],rs[5],rt[5],imm[16]}              & Op=6'b001010                  & rt$leftarrow$rs<sign\_extend(imm) signed                                \\
+			\midrule
+			sltiu         & {Op[6],rs[5],rt[5],imm[16]}              & Op=6'b001011                  & rt$\leftarrow$(0||rs)<(0||sign\_extend)                                 \\
+			\midrule
+			sltu          & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6'b101011 & rd$\leftarrow$(0||rs)<(0||rt)                                           \\
+			\midrule
+			j             & {Op[6], j\_addr[26]}                     & Op=6'b000010                  & PC=nPC, PC $\leftarrow$ \{PC[31:28],j\_addr,00\}                        \\
+			\midrule
+			jr            & {Op[6],rs[5],0*10,0*5,Funct[6]}          & Op=6'b000000, Funct=6'b001000 & PC=nPC, PC$\leftarrow$rs                                                \\
+			\midrule
+			jal           & {Op[6],j\_addr[26]}                      & Op=6'b000011                  & PC=nPC, PC $\leftarrow$ \{PC[31:28],j\_addr,00\}, \$ra$\leftarrow$ PC+4 \\
+			\midrule
+			jalr          & {Op[6],rs[5],0*5,rd[5],0*5,Funct[6]}     & Op=6'b000000, Funct=6'b001001 & PC=nPC, PC$\leftarrow$ rs,rd$\leftarrow$PC+4                            \\
+			\midrule
+			nop           & 0                                        & 0                             & sll \$0,\$0,0                                                           \\
+			\midrule
+			xor           & {Op[6],rs[5],rt[5],rd[5],00000,Funct[6]} & Op=6'b000000, Funct=6'b100110 & rd$\leftarrow$rs$\wedge$rt                                              \\
+			\midrule
+			xori          & {Op[6],rs[5],rt[5],imm[16]}              & Op=6'b001110                  & rt$\leftarrow$rs $\wedge$ zero\_extend(imm)                             \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\section{Data Path}
+\subsection{GRF}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{GRF端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description} \\
+			\midrule
+			clk           & Input              & 1              & 时钟信号             \\
+			\midrule
+			reset         & Input              & 1              & 复位信号             \\
+			\midrule
+			we            & Input              & 1              & 写使能信号           \\
+			\midrule
+			A1            & Input              & [4:0]          & 读寄存器地址1        \\
+			\midrule
+			A2            & Input              & [4:0]          & 读寄存器地址2        \\
+			\midrule
+			A3            & Input              & [4:0]          & 写寄存器地址         \\
+			\midrule
+			wd            & Input              & [31:0]         & 数据输入             \\
+			\midrule
+			r1            & Output             & [31:0]         & A1所指向寄存器的值   \\
+			\midrule
+			r2            & Output             & [31:0]         & A2所指向寄存器的值   \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{GRF功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Function}                                                      \\
+			\midrule
+			reset         & 同步复位                                                               \\
+			\midrule
+			we            & 当Clk上升沿来临，若reset为低电平且we为高电平，则将wd写入A3指向的寄存器 \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\subsection{ALU}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{ALU端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description} \\
+			\midrule
+			SrcA          & Input              & [31:0]         & ALU第一个操作数      \\
+			\midrule
+			SrcB          & Input              & [31:0]         & ALU第二个操作数      \\
+			\midrule
+			ALUCtrl       & Input              & [3:0]          & ALU功能控制          \\
+			\midrule
+			ALURes        & Output Reg         & [31:0]         & ALU计算结果          \\
+			\midrule
+			Zero          & Output             & 1              & ALU计算结果是否为零  \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{ALU功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{ALUCtrl} & \textbf{Function}          \\
+			\midrule
+			4'b0000          & 加法运算                   \\
+			\midrule
+			4'b0001          & 减法运算                   \\
+			\midrule
+			4'b0010          & 与运算                     \\
+			\midrule
+			4'b0011          & 或运算                     \\
+			\midrule
+			4'b0100          & 异或运算                   \\
+			\midrule
+			4'b0101          & 或非运算                   \\
+			\midrule
+			4'b0110          & 左移运算(SrcB<<SrcA[4:0])  \\
+			\midrule
+			4'b0111          & 算术右移(SrcB>>>SrcA[4:0]) \\
+			\midrule
+			4'b1000          & 逻辑右移(SrcB>>SrcA[4:0])  \\
+			\midrule
+			4'b1001          & 加载到高位                 \\
+			\midrule
+			4'b1010          & 比较大小(SrcA>SrcB)有符号  \\
+			\midrule
+			4'b1011          & 比较大小(SrcA<SrcB)无符号  \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\subsection{EXT}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{EXT端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width}     & \textbf{Description} \\
+			\midrule
+			in            & Input              & 不定长，默认[15:0] & 输入                 \\
+			\midrule
+			type          & Input              & [1:0]              & Extender功能控制     \\
+			\midrule
+			out           & Output             & 不定长，默认[31:0] & 扩展结果             \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{EXT功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{type} & \textbf{Function} \\
+			\midrule
+			2'b00         & 零扩展            \\
+			\midrule
+			2'b01         & 符号扩展          \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\subsection{DM}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{DM端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}       \\
+			\midrule
+			clk           & Input              & 1              & 时钟信号                   \\
+			\midrule
+			reset         & Input              & 1              & 复位信号                   \\
+			\midrule
+			we            & Input              & 1              & 写入使能信号               \\
+			\midrule
+			type          & input              & [2:0]          & 数据类型选择               \\
+			\midrule
+			addr          & Input              & [31:0]         & 目标存储器地址             \\
+			\midrule
+			wd            & Input              & [31:0]         & 数据输入                   \\
+			\midrule
+			PC            & Input              & [31:0]         & 执行写入时的PC值（评测用） \\
+			\midrule
+			rd            & Output             & [31:0]         & 读取数据                   \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{DM功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port}       & \textbf{Function}                                                      \\
+			\midrule
+			reset               & 同步复位                                                               \\
+			\midrule
+			\multirow{5}*{type} & 3'b000: Word                                                           \\
+			~                   & 3'b010: Half\_unsigned                                                 \\
+			~                   & 3'b011: Half\_signed                                                   \\
+			~                   & 3'b100: Byte\_unsigned                                                 \\
+			~                   & 3'b101: Byte\_signed                                                   \\
+			\midrule
+			we                  & 当clk上升沿来临，若reset为低电平且we为高电平，则将wd写入addr指向的地址 \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\subsection{IFU}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{PC端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}           \\
+			\midrule
+			clk           & Input              & 1              & 时钟信号                       \\
+			\midrule
+			reset         & Input              & 1              & 同步复位信号（32'h0000\_3000） \\
+			\midrule
+			PCWrite       & Input              & 1              & 写使能信号                     \\
+			\midrule
+			nPC           & Input              & [31:0]         & 下一个PC值（从NPC获得）        \\
+			\midrule
+			PC            & Output             & [31:0]         & 当前PC值                       \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{PC功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port}     & \textbf{Function}                                      \\
+			\midrule
+			\multirow{2}*{PC} & 当clk上升沿来临，若reset为高电平则复位至32'h0000\_3000 \\
+			~                 & 否则若PCWrite，则PC<=nPC                                            \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{NPC端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}     \\
+			\midrule
+			clk           & Input              & 1              & 时钟信号                 \\
+			\midrule
+			reset&Input&1&复位信号\\
+			\midrule
+			branch        & Input              & 1              & 是否b跳转                \\
+			\midrule
+			jump          & Input              & 1              & 是否普通j跳转            \\
+			\midrule
+			jump\_r       & Input              & 1              & 是否寄存器j跳转          \\
+			\midrule
+			PC            & Input              & [31:0]         & 当前PC值                 \\
+			\midrule
+			imm           & Input              & [31:0]         & 已移位并符号扩展的立即数 \\
+			\midrule
+			J\_Index      & Input              & [25:0]         & J跳转的偏移量            \\
+			\midrule
+			RD            & Input              & [31:0]         & JR跳转偏移量             \\
+			\midrule
+			PC4           & Output             & [31:0]         & PC+4值                   \\
+			\midrule
+			nPC           & Output             & [31:0]         & 下一个PC值               \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{IM端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description} \\
+			\midrule
+			addr          & Input              & [31:0]         & 当前PC值             \\
+			\midrule
+			Inst          & Output             & [31:0]         & 当前指令             \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\subsection{Branch(用于控制b跳转)}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Branch端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}                  \\
+			\midrule
+			SrcA          & Input              & [31:0]         & 第一个操作数（与ALU第一个操作数相同） \\
+			\midrule
+			SrcB          & Input              & [31:0]         & 第二个操作数（与ALU第二个操作数相同） \\
+			\midrule
+			Branch        & Input              & 1              & 是否进行b跳转判定                     \\
+			\midrule
+			BranchOp      & Input              & [3:0]          & b跳转类型                             \\
+			\midrule
+			pc\_branch    & Output             & 1              & 是否进行b跳转                         \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Branch功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{BranchOp} & \textbf{Function} \\
+			\midrule
+			4'b0000           & BEQ               \\
+			\midrule
+			4'b0001           & BNE               \\
+			\midrule
+			4'b0010           & BGTZ              \\
+			\midrule
+			4'b0011           & BLEZ              \\
+			\midrule
+			4'b0100           & BGEZ              \\
+			\midrule
+			4'b0101           & BLTZ              \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\section{Controller}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Controller端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}            \\
+			\midrule
+			inst          & Input              & [31:0]         & 当前指令                        \\
+			\midrule
+			MemtoReg      & Output             & 1              & 从DM读取数据到GRF               \\
+			\midrule
+			MemWrite      & Output             & 1              & 向DM写入来自GRF的数据           \\
+			\midrule
+			Branch        & Output             & 1              & b跳转                           \\
+			\midrule
+			BranchOp      & Output             & [3:0]          & b跳转类型                       \\
+			\midrule
+			ALUCtrl       & Output             & [3:0]          & ALU功能控制                     \\
+			\midrule
+			ALUASrc       & Output             & 1              & ALU.SrcA来源选择                \\
+			\midrule
+			ALUSrc        & Output             & 1              & ALU.SrcB来源选择                \\
+			\midrule
+			RegDst        & Output             & 1              & 目标寄存器选择([20:16],[15:11]) \\
+			\midrule
+			RegWrite      & Output             & 1              & 寄存器写使能                    \\
+			\midrule
+			Extend        & Output             & 1              & 立即数扩展类型                  \\
+			\midrule
+			Jump          & Output             & 1              & j跳转                           \\
+			\midrule
+			Jump\_R       & Output             & 1              & j跳转(r)                        \\
+			\midrule
+			Link          & Output             & 1              & j跳转(l)                        \\
+			\midrule
+			DataType      & Output             & [2:0]          & DM操作数据类型                  \\
+			\midrule
+			PCWrite&Output&1&PC写使能信号\\
+			\midrule 
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{指令-输出}
+		\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+			\hline
+			\rowcolor{mypink}
+			\diagbox{\textbf{Inst}}{\textbf{Output}} & \textbf{MemtoReg} & \textbf{MemWrite} & \textbf{Branch} & \textbf{BranchOp} & \textbf{ALUCtrl} & \textbf{ALUASrc} & \textbf{ALUSrc} & \textbf{RegDst} & \textbf{RegWrite} \\
+			\hline
+			addu                                     & 0                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 0               & 1               & 1                 \\
+			\hline
+			andiu                                    & 0                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			subu                                     & 0                 & 0                 & 0               & 0                 & 4'b0001          & 0                & 0               & 1               & 1                 \\
+			\hline
+			and                                      & 0                 & 0                 & 0               & 0                 & 4'b0010          & 0                & 0               & 1               & 1                 \\
+			\hline
+			andi                                     & 0                 & 0                 & 0               & 0                 & 4'b0010          & 0                & 1               & 0               & 1                 \\
+			\hline
+			or                                       & 0                 & 0                 & 0               & 0                 & 4'b0011          & 0                & 0               & 1               & 1                 \\
+			\hline
+			ori                                      & 0                 & 0                 & 0               & 0                 & 4'b0011          & 0                & 1               & 0               & 1                 \\
+			\hline
+			lw                                       & 1                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sw                                       & 0                 & 1                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 0                 \\
+			\hline
+			lh                                       & 1                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			lhu                                      & 1                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sh                                       & 0                 & 1                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 0                 \\
+			\hline
+			lb                                       & 1                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			lbu                                      & 1                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sb                                       & 0                 & 1                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 0                 \\
+			\hline
+			beq                                      & 0                 & 0                 & 1               & 4'b0000           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			bne                                      & 0                 & 0                 & 1               & 4'b0001           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			bgtz                                     & 0                 & 0                 & 1               & 4'b0010           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			blez                                     & 0                 & 0                 & 1               & 4'b0011           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			bgez                                     & 0                 & 0                 & 1               & 4'b0100           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			bltz                                     & 0                 & 0                 & 1               & 4'b0101           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			lui                                      & 0                 & 0                 & 0               & 0                 & 4'b1001          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sll                                      & 0                 & 0                 & 0               & 0                 & 4'b0110          & 1                & 0               & 1               & 1                 \\
+			\hline
+			sllv                                     & 0                 & 0                 & 0               & 0                 & 4'b0110          & 0                & 0               & 1               & 1                 \\
+			\hline
+			sra                                      & 0                 & 0                 & 0               & 0                 & 4'b0111          & 1                & 0               & 1               & 1                 \\
+			\hline
+			srav                                     & 0                 & 0                 & 0               & 0                 & 4'b0111          & 0                & 0               & 1               & 1                 \\
+			\hline
+			srl                                      & 0                 & 0                 & 0               & 0                 & 4'b1000          & 1                & 0               & 1               & 1                 \\
+			\hline
+			srlv                                     & 0                 & 0                 & 0               & 0                 & 4'b1000          & 0                & 0               & 1               & 1                 \\
+			\hline
+			j                                        & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 0               & 0                 \\
+			\hline
+			jr                                       & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 1               & 0                 \\
+			\hline
+			jal                                      & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 0               & 1                 \\
+			\hline
+			jalr                                     & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 1               & 1                 \\
+			\hline
+			xor                                      & 0                 & 0                 & 0               & 0                 & 4'b0100          & 0                & 0               & 1               & 1                 \\
+			\hline
+			xori                                     & 0                 & 0                 & 0               & 0                 & 4'b0100          & 0                & 1               & 0               & 1                 \\
+			\hline
+			slt                                      & 0                 & 0                 & 0               & 0                 & 4'b1010          & 0                & 0               & 1               & 1                 \\
+			\hline
+			slti                                     & 0                 & 0                 & 0               & 0                 & 4'b1010          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sltiu                                    & 0                 & 0                 & 0               & 0                 & 4'b1011          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sltu                                     & 0                 & 0                 & 0               & 0                 & 4'b1011          & 0                & 0               & 1               & 1                 \\
+			\hline
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{续上表}
+		\begin{tabular}{|c|c|c|c|c|c|}
+			\hline
+			\rowcolor{mypink}
+			\diagbox{\textbf{Inst}}{\textbf{Output}} & \textbf{Extend} & \textbf{Jump} & \textbf{Jump\_R} & \textbf{Link} & \textbf{DataType} \\
+			\hline
+			addu                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			addiu                                    & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			subu                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			and                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			andi                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			or                                       & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			ori                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			lw                                       & 1               & 0             & 0                & 0             & 3'b000            \\
+			\hline
+			sw                                       & 1               & 0             & 0                & 0             & 3'b000            \\
+			\hline
+			lh                                       & 1               & 0             & 0                & 0             & 3'b011            \\
+			\hline
+			lhu                                      & 1               & 0             & 0                & 0             & 3'b010            \\
+			\hline
+			sh                                       & 1               & 0             & 0                & 0             & 3'b010            \\
+			\hline
+			lb                                       & 1               & 0             & 0                & 0             & 3'b101            \\
+			\hline
+			lbu                                      & 1               & 0             & 0                & 0             & 3'b100            \\
+			\hline
+			sb                                       & 1               & 0             & 0                & 0             & 3'b100            \\
+			\hline
+			beq                                      & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			bne                                      & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			bgtz                                     & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			blez                                     & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			bgez                                     & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			bltz                                     & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			lui                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			sll                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			sllv                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			sra                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			srav                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			srl                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			srlv                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			j                                        & 0               & 1             & 0                & 0             & 0                 \\
+			\hline
+			jr                                       & 0               & 0             & 1                & 0             & 0                 \\
+			\hline
+			jal                                      & 0               & 1             & 0                & 1             & 0                 \\
+			\hline
+			jalr                                     & 0               & 0             & 1                & 1             & 0                 \\
+			\hline
+			xor                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			xori                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			slt                                      & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+			slti                                     & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			sltiu                                    & 1               & 0             & 0                & 0             & 0                 \\
+			\hline
+			sltu                                     & 0               & 0             & 0                & 0             & 0                 \\
+			\hline
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.5]{./state.png}
+\end{figure}
+\newpage
+\section{Testbench}
+\begin{center}
+	\begin{lstlisting}[style={mips-style}]
+				.text
+		main:
+				ori $1,$1,32 			# 34210020
+				ori $2,$2,4 			# 34420004
+				ori $3,$3,1 			# 34630001
+				lui $4,0xffff			# 3c04ffff
+				ori $7,0xffff			# 34e7ffff
+				addu $4,$7,$4			# 00e42021
+		
+				jal loop			# 0c000c07
+		loop:
+				beq $6,$1,loop_end		# 10c10006
+				sw $3,0($5) 			# aca30000
+				lw $3,0($5) 			# 8ca30000
+				subu $3,$3,$4 			# 00641823
+				addu $5,$5,$2 			# 00a22821
+				subu $6,$6,$4 			# 00c43023
+				jr $ra				# 03e00008
+		loop_end:
+\end{lstlisting}
+\end{center}
+\vspace{2ex}
+\indent \textbf{期望状态}：\$1高位为0x114，\$2高位为0x8930，在DM中，从0x00到0x1f，被填入0x01到0x20。
+\newpage
+\section{思考题}
+
+\end{document}
