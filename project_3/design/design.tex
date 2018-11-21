@@ -1,0 +1,705 @@
+\documentclass[UTF8]{ctexart}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{cite}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{txfonts}
+\usepackage{extarrows}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{diagbox}
+\usepackage{threeparttable}
+\usepackage{caption}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{colortbl}
+\usepackage{fontspec}
+\usepackage{listings}
+\usepackage{mips}
+\usepackage{fancybox}
+\usepackage[super,square]{natbib}
+
+\makeatletter
+\newenvironment{CenteredBox}{% 
+\begin{Sbox}}{% Save the content in a box
+\end{Sbox}\centerline{\parbox{\wd\@Sbox}{\TheSbox}}}% And output it centered
+\makeatother
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\newfontfamily\courier{Courier New}
+\lstset{ %
+  language=[mips]Assembler,       % the language of the code
+  numbers=left,
+  numberstyle=\small\courier,
+  basicstyle=\small\courier
+}
+\captionsetup[table]{singlelinecheck = false,justification=raggedleft}
+\setmainfont{Times New Roman}
+\definecolor{mypink}{rgb}{.99,.91,.95}
+\geometry{left=0.3cm,right=2cm,top=2.5cm,bottom=2cm}
+\setlength{\parindent}{2em}
+\addtolength{\parskip}{-.4em}
+\title{\textbf{P3设计文档}}
+\author{伦泽标}
+\date{\today}
+\begin{document}
+\pagestyle{plain}
+
+\null
+\nointerlineskip
+\vfill
+\let\snewpage \newpage
+\let\newpage \relax
+\maketitle
+\let \newpage \snewpage
+\vfill
+\break
+\section{Instruction Set}
+\begin{table}[H]
+	\begin{threeparttable}
+		\begin{tabular}{cccl}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Inst} & \textbf{Part}                           & \textbf{Value}                & \textbf{Comment}                                                \\
+			\midrule
+			addu&{Op[6],rs[5],rt[5],rd[5],00000,Funct[6]}&Op=6'b000000, Funct=6b'100001\\
+			\midrule
+			subu&{Op[6],rs[5],rt[5],rd[5],00000,Funct[6]}&Op=6'b000000, Funct=6b'100011\\
+			\midrule
+			ori           & {Op[6],rs[5],rt[5],imm[16]}             & Op=6'b001101                  & rt$\leftarrow$rs | zero\_extend(imm)                            \\
+			\midrule
+			lw            & {Op[6],base[5],rt[5],offset[16]}        & Op=6'b100011                  & rt$\leftarrow$memory[base+offset], sign\_extend(offset)         \\
+			\midrule
+			sw            & {Op[6],base[5],rt[5],offset[16]}        & Op=6'b101011                  & memory[base+offset]$\leftarrow$rt, sign\_extend(offset)         \\
+			\midrule
+			beq           & {Op[6],rs[5],rt[5],offset[16]}          & Op=6'b000100                  & sign\_extend(offset)<<2                                         \\
+			\midrule
+			lui           & {Op[6],00000,rt[5],imm[16]}             & Op=6'b001111                  & rt$\leftarrow$imm<<16                                           \\
+			\midrule
+			sll           & {Op[6],00000,rt[5],rd[5],s[5],Funct[6]} & Op=6'b000000, Funct=6'b000000 & rd$\leftarrow$rt<<s                                             \\
+			\midrule
+			sllv          & {Op[6],rs[5],rt[5],rd[5],0*5,Funct}     & Op=6'b000000, Funct=6'b000100 & rd$\leftarrow$rt<<rs[4:0]                                       \\
+			\midrule
+			sra           & {Op[6],0*5,rt[5],rd[5],s[5],Funct}      & Op=6'b000000, Funct=6'b000011 & rd$\leftarrow$rt>>s,arithmetic                                  \\
+			\midrule
+			srav          & {Op[6],rs[5],rt[5],rd[5],0*5,Funct[6]}  & Op=6'b000000, Funct=6'b000111 & rd$\leftarrow$rt>>rs[4:0]，arithmetic                           \\
+			\midrule
+			srl           & {Op[6],0*5,rt[5],rd[5],s[5],Funct[6]}   & Op=6'b000000, Funct=6'b000010 & rd$\leftarrow$rt>>s，logic                                      \\
+			\midrule
+			srlv          & {Op[6],rs[5],rt[5],rd[5],0*5,Funct[6]}  & Op=6'b000000, Funct=6'b000110 & rd$\leftarrow$rt>>rs[4:0]，logic                                \\
+			\midrule
+			j             & {Op[6], j\_addr[26]}                    & Op=6'b000010                  & PC $\leftarrow$ \{PC[31:28],j\_addr,00\}                        \\
+			\midrule
+			jr            & {Op[6],rs[5],0*10,0*5,Funct[6]}         & Op=6'b000000, Funct=6'b001000 & PC$\leftarrow$rs                                                \\
+			\midrule
+			jal           & {Op[6],j\_addr[26]}                     & Op=6'b000011                  & PC $\leftarrow$ \{PC[31:28],j\_addr,00\}, \$ra$\leftarrow$ PC+4 \\
+			\midrule
+			jalr          & {Op[6],rs[5],0*5,rd[5],0*5,Funct[6]}    & Op=6'b000000, Funct=6'b001001 & PC$\leftarrow$ rs,rd$\leftarrow$PC+4                            \\
+			\midrule
+			nop           & 0                                       & 0                             & sll \$0,\$0,0                                                   \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\newpage
+\section{Overview}
+CPU顶层结构如下图所示
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{CPU.png}
+	\caption{CPU顶层结构}
+\end{figure}
+\newpage
+\section{Unit}
+\subsection{GRF}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{GRF端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description} \\
+			\midrule
+			Clk           & Input              & 1              & 时钟信号             \\
+			\midrule
+			Reset         & Input              & 1              & 复位信号             \\
+			\midrule
+			WE            & Input              & 1              & 写使能信号           \\
+			\midrule
+			A1            & Input              & [4:0]          & 读寄存器地址1        \\
+			\midrule
+			A2            & Input              & [4:0]          & 读寄存器地址2        \\
+			\midrule
+			A3            & Input              & [4:0]          & 写寄存器地址         \\
+			\midrule
+			Data          & Input              & [31:0]         & 数据输入             \\
+			\midrule
+			RD1           & Output             & [31:0]         & A1所指向寄存器的值   \\
+			\midrule
+			RD2           & Output             & [31:0]         & A2所指向寄存器的值   \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{GRF功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Function}                                       \\
+			\midrule
+			Reset         & 异步复位                                                \\
+			\midrule
+			WE            & 当Clk上升沿来临，若WE为高电平，则将Data写入A3指向的地址 \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{GRF.png}
+	\caption{GRF实现图}
+\end{figure}
+\newpage
+\subsection{ALU}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{ALU端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description} \\
+			\midrule
+			SrcA          & Input              & [31:0]         & ALU输入1             \\
+			\midrule
+			SrcB          & Input              & [31:0]         & ALU输入2             \\
+			\midrule
+			ALUCtrl       & Input              & [3:0]          & ALU功能控制          \\
+			\midrule
+			Zero          & Output             & 1              & ALU计算结果是否为零  \\
+			\midrule
+			ALURes        & Output             & [31:0]         & ALU计算结果          \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{ALU功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{ALUCtrl} & \textbf{Function}          \\
+			\midrule
+			4'b0000          & 加法运算                   \\
+			\midrule
+			4'b0001          & 减法运算                   \\
+			\midrule
+			4'b0010          & 与运算                     \\
+			\midrule
+			4'b0011          & 或运算                     \\
+			\midrule
+			4'b0100          & 左移运算(SrcB<<SrcA[4:0])  \\
+			\midrule
+			4'b0101          & 逻辑右移(SrcB>>SrcA[4:0])  \\
+			\midrule
+			4'b0110          & 算术右移(SrcB>>>SrcA[4:0]) \\
+			\midrule
+			4'b0111          & 加载到高位                 \\
+			\midrule
+			4'b1000          & 比较大小(SrcA<SrcB)无符号  \\
+			\midrule
+			4'b1001          & 比较大小(SrcA>SrcB)有符号  \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{ALU.png}
+	\caption{ALU实现图}
+\end{figure}
+\newpage
+\subsection{EXT}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{EXT端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}     \\
+			\midrule
+			Imm           & Input              & [15:0]         & 输入                     \\
+			\midrule
+			ExtOp         & Input              & [2:0]          & Extender功能控制(有冗余) \\
+			\midrule
+			ExtRes        & Output             & [31:0]         & 扩展结果                 \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{EXT功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{ExtOp} & \textbf{Function} \\
+			\midrule
+			3'b000         & 零扩展            \\
+			\midrule
+			3'b001         & 符号扩展          \\
+			\midrule
+			3'b010         & 加载到高位        \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.7]{Extender.png}
+	\caption{EXT实现图}
+\end{figure}
+\newpage
+\subsection{DM}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{DM端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}       \\
+			\midrule
+			Clk           & Input              & 1              & 时钟信号                   \\
+			\midrule
+			Reset         & Input              & 1              & 复位信号                   \\
+			\midrule
+			Addr          & Input              & [31:0]         & 目标存储器地址(仅取后五位) \\
+
+			\midrule
+			Data          & Input              & [31:0]         & 数据输入                   \\
+			\midrule
+			WE            & Input              & 1              & 写入使能信号               \\
+			\midrule
+			RD            & Output             & [31:0]         & 读取数据                   \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{DM功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Function}                                         \\
+			\midrule
+			Reset         & 异步复位                                                  \\
+			\midrule
+			WE            & 当Clk上升沿来临，若WE为高电平，则将Data写入Addr指向的地址 \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.8]{DM.png}
+	\caption{DM实现图}
+\end{figure}
+\newpage
+\subsection{IFU}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{IFU端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}            \\
+			\midrule
+			Clk           & Input              & 1              & 时钟信号                        \\
+			\midrule
+			Reset         & Input              & 1              & 复位信号                        \\
+			\midrule
+			PCSrc         & Input              & 1              & 来自Branch模块，是否b跳转       \\
+			\midrule
+			Imm           & Input              & [16:0]         & 用于计算跳转偏移量              \\
+			\midrule
+			Jump          & Input              & 1              & 来自Controller，是否j跳转       \\
+			\midrule
+			J\_Addr       & Input              & [25:0]         & j跳转偏移量                     \\
+			\midrule
+			RD            & Input              & [31:0]         & 寄存器rs的值(jr,jalr)           \\
+			\midrule
+			Jump\_R       & Input              & 1              & 来自Controller，是否jr/jalr跳转 \\
+			\midrule
+			PC+4          & Output             & [31:0]         & 当前PC+4，用于Link              \\
+			\midrule
+			Inst          & Output             & [31:0]         & 当前指令                        \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{IFU功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Function}                                  \\
+			\midrule
+			Clk           & 上升沿更新指令                                     \\
+			\midrule
+			Reset         & 异步复位                                           \\
+			\midrule
+			PCSrc         & 低电平表示下一条指令为PC+4，高电平为PC+4+SigImm<<2 \\
+			\midrule
+			Jump          & 高电平表示下一条指令为\{PC[31:28],J\_Addr,00\}     \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{IFU.png}
+	\caption{IFU实现图}
+\end{figure}
+\newpage
+\subsection{Branch(用于控制跳转)}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Branch端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description} \\
+			\midrule
+			Branch        & Input              & 1              & 是否进行b跳转判定    \\
+			\midrule
+			BranchOp      & Input              & [3:0]          & b跳转类型            \\
+			\midrule
+			SrcA          & Input              & [31:0]         & 操作数1              \\
+			\midrule
+			SrcB          & Input              & [31:0]         & 操作数2              \\
+			\midrule
+			PCSrc         & Output             & 1              & 是否b跳转            \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Branch功能定义}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{BranchOp} & \textbf{Function} \\
+			\midrule
+			4'b0000           & beq               \\
+			\midrule
+			4'b0001           & bne               \\
+			\midrule
+			4'b0010           & bgez              \\
+			\midrule
+			4'b0011           & bgtz              \\
+			\midrule
+			4'b0100           & blez              \\
+			\midrule
+			4'b0101           & bltz              \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.8]{Branch.png}
+	\caption{Branch实现图}
+\end{figure}
+\newpage
+\section{Controller}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Controller端口定义}
+		\begin{tabular}{cccc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Port} & \textbf{Direction} & \textbf{Width} & \textbf{Description}            \\
+			\midrule
+			Op            & Input              & [5:0]          & OpCode                          \\
+			\midrule
+			Funct         & Input              & [5:0]          & Funct                           \\
+			\midrule
+			MemtoReg      & Output             & 1              & 从DM读取数据到GRF               \\
+			\midrule
+			MemWrite      & Output             & 1              & 向DM写入来自GRF的数据           \\
+			\midrule
+			Branch        & Output             & 1              & b跳转                           \\
+			\midrule
+			BranchOp      & Output             & [3:0]          & b跳转类型                       \\
+			\midrule
+			ALUCtrl       & Output             & [3:0]          & ALU功能控制                     \\
+			\midrule
+			ALUASrc       & Output             & 1              & ALU.SrcA来源选择                \\
+			\midrule
+			ALUSrc        & Output             & 1              & ALU.SrcB来源选择                \\
+			\midrule
+			RegDst        & Output             & 1              & 目标寄存器选择([20:16],[15:11]) \\
+			\midrule
+			RegWrite      & Output             & 1              & 寄存器写使能                    \\
+			\midrule
+			Extend        & Output             & 1              & 扩展                            \\
+			\midrule
+			Jump          & Output             & 1              & j跳转                           \\
+			\midrule
+			Jump\_R       & Output             & 1              & j跳转(r)                        \\
+			\midrule
+			Link          & Output             & 1              & j跳转(l)                        \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{OpCode译码}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Op} & \textbf{Inst} \\
+			\midrule
+			6'b000000   & R-Type        \\
+			\midrule
+			6'b000001   & bltz/bgez     \\
+			\midrule
+			6'b001101   & ori           \\
+			\midrule
+			6'b100011   & lw            \\
+			\midrule
+			6'b101011   & sw            \\
+			\midrule
+			6'b000100   & beq           \\
+			\midrule
+			6'b001111   & lui           \\
+			\midrule
+			6'b000010   & j             \\
+			\midrule
+			6'b000011   & jal           \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{Funct译码}
+		\begin{tabular}{cc}
+			\toprule
+			\rowcolor{mypink}
+			\textbf{Funct} & \textbf{Inst} \\
+			\midrule
+			6'b100001      & addu          \\
+			\midrule
+			6'b100011      & subu          \\
+			\midrule
+			6'b000000      & sll           \\
+			\midrule
+			6'b001000      & jr            \\
+			\midrule
+			6'b001001      & jalr          \\
+			\midrule
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{指令-输出}
+		\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+			\hline
+			\rowcolor{mypink}
+			\diagbox{\textbf{Inst}}{\textbf{Output}} & \textbf{MemtoReg} & \textbf{MemWrite} & \textbf{Branch} & \textbf{BranchOp} & \textbf{ALUCtrl} & \textbf{ALUASrc} & \textbf{ALUSrc} & \textbf{RegDst} & \textbf{RegWrite} \\
+			\hline
+			addu                                     & 0                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 0               & 1               & 1                 \\
+			\hline
+			subu                                     & 0                 & 0                 & 0               & 0                 & 4'b0001          & 0                & 0               & 1               & 1                 \\
+			\hline
+			ori                                      & 0                 & 0                 & 0               & 0                 & 4'b0011          & 0                & 1               & 0               & 1                 \\
+			\hline
+			lw                                       & 1                 & 0                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sw                                       & 0                 & 1                 & 0               & 0                 & 4'b0000          & 0                & 1               & 0               & 0                 \\
+			\hline
+			beq                                      & 0                 & 0                 & 1               & 4'b0000           & 4'b0001          & 0                & 0               & 0               & 0                 \\
+			\hline
+			lui                                      & 0                 & 0                 & 0               & 0                 & 4'b0111          & 0                & 1               & 0               & 1                 \\
+			\hline
+			sll                                      & 0                 & 0                 & 0               & 0                 & 4'b0100          & 1                & 0               & 1               & 1                 \\
+			\hline
+			sllv                                     & 0                 & 0                 & 0               & 0                 & 4'b0100          & 0                & 0               & 1               & 1                 \\
+			\hline
+			sra                                      & 0                 & 0                 & 0               & 0                 & 4'b0110          & 1                & 0               & 1               & 1                 \\
+			\hline
+			srav                                     & 0                 & 0                 & 0               & 0                 & 4'b0110          & 0                & 0               & 1               & 1                 \\
+			\hline
+			srl                                      & 0                 & 0                 & 0               & 0                 & 4'b0101          & 1                & 0               & 1               & 1                 \\
+			\hline
+			srlv                                     & 0                 & 0                 & 0               & 0                 & 4'b0101          & 0                & 0               & 1               & 1                 \\
+			\hline
+			j                                        & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 0               & 0                 \\
+			\hline
+			jr                                       & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 1               & 0                 \\
+			\hline
+			jal                                      & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 0               & 1                 \\
+			\hline
+			jalr                                     & 0                 & 0                 & 0               & 0                 & 0                & 0                & 0               & 1               & 1                 \\
+			\hline
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{table}[H]
+	\centering
+	\begin{threeparttable}
+		\caption{续上表}
+		\begin{tabular}{|c|c|c|c|c|}
+			\hline
+			\rowcolor{mypink}
+			\diagbox{\textbf{Inst}}{\textbf{Output}} & \textbf{Extend} & \textbf{Jump} & \textbf{Jump\_R} & \textbf{Link} \\
+			\hline
+			addu                                     & 0               & 0             & 0                & 0             \\
+			\hline
+			subu                                     & 0               & 0             & 0                & 0             \\
+			\hline
+			ori                                      & 0               & 0             & 0                & 0             \\
+			\hline
+			lw                                       & 1               & 0             & 0                & 0             \\
+			\hline
+			sw                                       & 1               & 0             & 0                & 0             \\
+			\hline
+			beq                                      & 1               & 0             & 0                & 0             \\
+			\hline
+			lui                                      & 1               & 0             & 0                & 0             \\
+			\hline
+			sll                                      & 0               & 0             & 0                & 0             \\
+			\hline
+			sllv                                     & 0               & 0             & 0                & 0             \\
+			\hline
+			sra                                      & 0               & 0             & 0                & 0             \\
+			\hline
+			srav                                     & 0               & 0             & 0                & 0             \\
+			\hline
+			srl                                      & 0               & 0             & 0                & 0             \\
+			\hline
+			srlv                                     & 0               & 0             & 0                & 0             \\
+			\hline
+			j                                        & 0               & 1             & 0                & 0             \\
+			\hline
+			jr                                       & 0               & 0             & 1                & 0             \\
+			\hline
+			jal                                      & 0               & 1             & 0                & 1             \\
+			\hline
+			jalr                                     & 0               & 0             & 1                & 1             \\
+			\hline
+		\end{tabular}
+	\end{threeparttable}
+\end{table}
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{Controller.png}
+	\caption{Controller实现图}
+\end{figure}
+\newpage
+\section{Testbench}
+\begin{CenteredBox}
+	\begin{lstlisting}
+		.text
+main:
+		lui $1,0x114			# 3c010114
+		lui $2,0x8930			# 3c028930
+		ori $t1,$t1,32			# 35290020
+		ori $t2,$t2,4			# 354a0004
+		ori $t3,$t3,1			# 356b0001
+		ori $t4,$t4,1			# 358c0001
+loop:
+		beq $t0,$t1,loop_end		# 11090006
+		sw $t3,0($s0)			# ae0b0000
+		lw $t3,0($s0)			# 8e0b0000
+		addu $t3,$t3,$t4		# 016c5821
+		addu $s0,$s0,$t2		# 020a8021
+		addu $t0,$t0,$t4		# 010c4021
+		beq $0,$0,loop			# 1000fff9
+loop_end:
+\end{lstlisting}
+\end{CenteredBox}
+\vspace{2ex}
+\indent \textbf{期望状态}：\$1高位为0x114，\$2高位为0x8930，在DM中，从0x00到0x1f，被填入0x01到0x20。
+\newpage
+\section{思考题}
+\subsection{若PC（程序计数器）位数为30位，试分析其与32位PC的优劣。}
+由于目前MIPS的指令是定长的，都是按字对齐的，30位的PC也能起到与32位的PC相同的作用，且在跳转时不需要对偏移量进行移位。但是30位的PC无法支持变长的指令，不利于指令的扩展。
+\subsection{现在我们的模块中 IM使用ROM， DM使用RAM， GRF使用寄存器，这种做法合理吗？ 请给出分析，若有改进意见也请一并给出。}
+目前是合理的：程序是较短小且一次性的，不需要更改，ROM是合适的；DM需要大量的空间，且需要是可读可写的，RAM是合适的；GRF需要高速读写，不需要太大的空间，也不需要扩展，寄存器的合适的。\\
+\indent 当然，对于完整的CPU而言，IM应是可读写的，其数据来源可以是DM，但此时需要有一个bootloader才能成功启动。
+\subsection{结合上文给出的样例真值表，给出RegDst， ALUSrc， MemtoReg，RegWrite, nPC\_Sel, ExtOp与op和func有关的布尔表达式(表达式中只能使用“与、或、非”3 种基本逻辑运算。)}
+\begin{equation*}
+	\begin{aligned}
+		RegDst   & =\overline{op_5}\,\overline{op_4}\,\overline{op_3}\,\overline{op_2}\,\overline{op_1}\,\overline{op_0}\,\overline{f_5}f_4f_3f_2\overline{f_0}                                                                                                                         \\
+		ALUSrc   & =\overline{op_5}\,\overline{op_4}op_3op_2\overline{op_1}op_0+op_5\overline{op_4}\,\overline{op_2}op_1op_0                                                                                                                                                            \\
+		MemtoReg & =op_5\overline{op_4}\,\overline{op_3}\,\overline{op_2}op_1op_0                                                                                                                                                                                                       \\
+		RegWrite & =\overline{op_5}\,\overline{op_4}\,\overline{op_3}\,\overline{op_2}\,\overline{op_1}\,\overline{op_0}\,\overline{f_5}f_4f_3f_2\overline{f_0}+\overline{op_5}\,\overline{op_4}op_3op_2\overline{op_1}op_0+op_5\overline{op_4}\,\overline{op_2}\overline{op_3}op_1op_0 \\
+		nPC\_Sel & =\overline{op_5}\,\overline{op_4}\,\overline{op_3}op_2\overline{op_1}\,\overline{op_0}                                                                                                                                                                               \\
+		ExtOp    & =op_5\overline{op_4}\,\overline{op_2}op_1op_0                                                                                                                                                                                                                        \\
+	\end{aligned}
+\end{equation*}
+\subsection{充分利用真值表中的 X 可以将以上控制信号化简为最简单的表达式， 请给出化简后的形式。}
+\begin{equation*}
+	\begin{aligned}
+		RegDst   & =\overline{op_5}\,\overline{op_4}\,\overline{op_3}\,\overline{op_2}\,\overline{op_1}\,\overline{op_0}\,\overline{f_5}f_4f_3f_2\overline{f_0}                                                                                                                         \\
+		ALUSrc   & =\overline{op_5}\,\overline{op_4}op_3op_2\overline{op_1}op_0+op_5\overline{op_4}\,\overline{op_2}op_1op_0                                                                                                                                                            \\
+		MemtoReg & =op_5\overline{op_4}\,\overline{op_2}op_1op_0                                                                                                                                                                                                                        \\
+		RegWrite & =\overline{op_5}\,\overline{op_4}\,\overline{op_3}\,\overline{op_2}\,\overline{op_1}\,\overline{op_0}\,\overline{f_5}f_4f_3f_2\overline{f_0}+\overline{op_5}\,\overline{op_4}op_3op_2\overline{op_1}op_0+op_5\overline{op_4}\,\overline{op_2}\overline{op_3}op_1op_0 \\
+		nPC\_Sel & =\overline{op_5}\,\overline{op_4}\,\overline{op_3}op_2\overline{op_1}\,\overline{op_0}                                                                                                                                                                               \\
+		ExtOp    & =op_5\overline{op_4}\,\overline{op_2}op_1op_0
+	\end{aligned}
+\end{equation*}
+\subsection{事实上，实现nop空指令，我们并不需要将它加入控制信号真值表，为什么？请给出你的理由。}
+nop即空指令，仅用于占位，无实际作用，对于控制信号没有影响。
+\subsection{前文提到，“可能需要手工修改指令码中的数据偏移”，但实际上只需再增加一个 DM片选信号,就可以解决这个问题。请阅读相关资料并设计一个 DM 改造方案使得无需手工修改数据偏移。}
+改造方案大致示意图如下，将DM地址输入(图中输入信号的位数仅为示意)的最高位作为片选信号，最高位为零时是代码段，为一时是数据段。
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.8]{Answer_DM.png}
+	\caption{DM改造方案(使用Logisim析出)}
+\end{figure}
+\subsection{除了编写程序进行测试外，还有一种验证CPU设计正确性的办法——形式验证。 形式验证的含义是根据某个或某些形式规范或属性，使用数学的方法证明其正确性或非正确性。请搜索“形式验证（Formal Verification)"了解相关内容后，简要阐述相比与测试，形式验证的优劣。}
+优点：
+\begin{itemize}
+	\item 能覆盖尽可能多的情况
+	\item 能够很快地给出目标状态所需的条件
+	\item 无需进行软件仿真或物理仿真，时间短
+	\item 适用于多个模块层级
+\end{itemize}
+\indent \indent 缺点:
+\begin{itemize}
+	\item 对于大规模、状态复杂的电路系统，难以完成验证
+	\item 仅在逻辑实现层面进行验证，无法验证电路实际情况的可靠性
+	\item 仅能覆盖能够预计到的问题，无法真正地杜绝问题
+\end{itemize}
+\end{document}
