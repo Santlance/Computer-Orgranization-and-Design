@@ -13,7 +13,8 @@
 `timescale 1ns / 1ps
 module mips(
     input clk,
-    input reset
+    input reset,
+    output [`Word] ALURes
 );
     wire [`Word] Inst;      // 当前指令
     wire [`Word] nPC;       // 下一个PC值
@@ -212,7 +213,7 @@ module mips(
         .reset(reset),
         .we(MemWrite),
         .type(DataType),
-        .addr(ALURes),
+        .addr_in(ALURes),
         .wd(RD2),
         .PC(current_PC),
         .rd(MemRD)

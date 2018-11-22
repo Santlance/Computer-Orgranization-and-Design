@@ -10,19 +10,16 @@ module DM #(parameter WIDTH = 12)
     input reset,
     input we,
     input [2:0]type,
-    input [`Word] addr_in,
+    input [`Word] addr,
     input [`Word] wd,
     input [`Word] PC,
     output [`Word] rd
 );
     localparam RAM_SIZE=2 ** (WIDTH-2);
     reg [7:0] ram[RAM_SIZE*4-1:0];
-
-    wire [`Word] addr={addr_in[31:2],2'b0};
-    wire [1:0] byte_select = addr_in[1:0];
+    wire [1:0] byte_select = addr[1:0];
     
     integer i;
-
     initial
         begin
             for(i=0;i<RAM_SIZE*4-1;i=i+1)
@@ -51,29 +48,27 @@ module DM #(parameter WIDTH = 12)
     wire [`Word] word_out=ram_word;
     wire [`Half] half_out;
     wire [`Byte] byte_out;
-    wire [`Word] wl_out;
-    wire [`Word] wr_out;
-    assign byte_out=(byte_select==0)?ram_b0:
-                    (byte_select==1)?ram_b1:
-                    (byte_select==2)?ram_b2:
-                    ram_b3;
-    assign half_out=(byte_select==0)?ram_h0:ram_h1;
-    assign wl_out=(byte_select==0)?{ram_b0,24'b0}:
-                  (byte_select==1)?{ram_h0,16'b0}:
-                  (byte_select==2)?{ram_b2,ram_h0,8'b0}:
-                  ram_word;
-    assign wr_out=(byte_select==0)?ram_word:
-                  (byte_select==1)?{8'b0,ram_h1,ram_b1}:
-                  (byte_select==2)?{16'b0,ram_h1}:
-                  {24'b0,ram_b3};
+
+    //read
+    Mux4 #(8) byte_mux(
+        .a0(ram_b0),
+        .a1(ram_b1),
+        .a2(ram_b2),
+        .a3(ram_b3),
+        .select(addr[1:0]),
+        .out(byte_out)
+        );
+    Mux2 #(16) half_mux(
+        .a0(ram_h0),
+        .a1(ram_h1),
+        .select(addr[1]),
+        .out(half_out)
+        );
     dm_read_mux dmrm(
         .word_in(word_out),
         .half_in(half_out),
         .byte_in(byte_out),
-        .wl_in(wl_out),
-        .wr_in(wr_out),
         .select(type),
-        .addr(addr[1:0]),
         .out(rd)
         );
 
@@ -90,33 +85,48 @@ module DM #(parameter WIDTH = 12)
                 $display("@%h: *%h <= %h",PC, addr,wd);
                 case (type)
                     3'b000 :   // Word
-                        {ram[addr+3],ram[addr+2],ram[addr+1],ram[addr]}<=wd;
+                        begin
+                            ram[addr+0]<=wd[`Byte0];
+                            ram[addr+1]<=wd[`Byte1];
+                            ram[addr+2]<=wd[`Byte2];
+                            ram[addr+3]<=wd[`Byte3];
+                        end
                     3'b010 : // Half
-                        {ram[addr_in+1],ram[addr_in+0]}<=wd[`Half0];
+                        begin
+                            case (addr[1])
+                                0:
+                                    begin
+                                        ram[addr+1]<=wd[`Byte1];
+                                        ram[addr+0]<=wd[`Byte0];
+                                    end
+                                1:
+                                    begin
+                                        ram[addr+3]<=wd[`Byte1];
+                                        ram[addr+2]<=wd[`Byte0];
+                                    end
+                            endcase
+                        end
                     3'b100 : // Byte
-                        ram[addr_in]<=wd[`Byte0];
-                    3'b110 : // WL
-                        case (byte_select)
-                            0 :
-                                ram[addr+0]<=wd[`Byte3];
-                            1 :
-                                {ram[addr+1],ram[addr+0]}<=wd[`Half1];
-                            2 :
-                                {ram[addr+2],ram[addr+1],ram[addr+0]}<={wd[`Half1],wd[`Byte1]};
-                            3 :
-                                {ram[addr+3],ram[addr+2],ram[addr+1],ram[addr+0]}<=wd;
-                        endcase
-                    3'b111 : // WR
-                        case (byte_select)
-                            0 :
-                                {ram[addr+3],ram[addr+2],ram[addr+1],ram[addr+0]}<=wd;
-                            1 :
-                                {ram[addr+3],ram[addr+2],ram[addr+1]}<={wd[`Byte2],wd[`Half0]};
-                            2 :
-                                {ram[addr+3],ram[addr+2]}<=wd[`Half0];
-                            3 :
-                                ram[addr+3]<=wd[`Byte0];
-                        endcase
+                        begin
+                            case (addr[1:0])
+                                0 : 
+                                    begin
+                                        ram[addr+0]<=wd[`Byte0];
+                                    end
+                                1 : 
+                                    begin
+                                        ram[addr+1]<=wd[`Byte0];
+                                    end
+                                2 : 
+                                    begin
+                                        ram[addr+2]<=wd[`Byte0];
+                                    end
+                                3 : 
+                                    begin
+                                        ram[addr+3]<=wd[`Byte0];
+                                    end
+                            endcase
+                        end
                 endcase
             end
         end
@@ -126,10 +136,7 @@ module dm_read_mux(
     input [`Word]word_in,
     input [`Half]half_in,
     input [`Byte]byte_in,
-    input [`Word]wl_in,
-    input [`Word]wr_in,
     input [2:0]select,
-    input [1:0]addr,
     output [31:0]out
 );
     wire [`Word] half_extend_signed;
@@ -160,8 +167,6 @@ module dm_read_mux(
                (select==3'b010)?half_extend_unsigned:
                (select==3'b011)?half_extend_signed:
                (select==3'b100)?byte_extend_unsigned:
-               (select==3'b101)?byte_extend_signed:
-               (select==3'b110)?wl_in:
-               (select==3'b111)?wr_in:0;
+               (select==3'b101)?byte_extend_signed:0;
 endmodule
 `endif
