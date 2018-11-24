@@ -106,15 +106,18 @@ module mips(
     wire [2:0] DataTypeM;
 
     wire [`Word] MemRDM;
-
+    wire [2:0] MemRDSelM;
+    wire [1:0] ByteSelM;
     // WB
     wire MemtoRegW,
          RegWriteW;
     wire [`Word] ALUResW,
                  MemRDW,
-                 RegDataW;
+                 RegDataW,
+                 MemRD_ExtendW;
     wire [4:0] RegAddrW;
-
+    wire [2:0] MemRDSelW;
+    wire [1:0] ByteSelW;
     // Bypass
     wire [1:0] Forward_A_D,
                Forward_B_D,
@@ -403,7 +406,9 @@ module mips(
         .addr_in(ALUResM),
         .wd(WriteDataM),
         .rd(MemRDM),
-        .PC(PCM)
+        .PC(PCM),
+        .rd_extend_type(MemRDSelM),
+        .byte_select(ByteSelM)
     );
 
     MEM_WB _mem_wb(
@@ -414,17 +419,29 @@ module mips(
         .MemtoRegM(MemtoRegM),
         .RegWriteM(RegWriteM),
         .MemRDM(MemRDM),
+        .MemRDSelM(MemRDSelM),
+        .ByteSelM(ByteSelM),
         .ALUResM(ALUResM),
         .RegAddrM(RegAddrM),
         .MemtoRegW(MemtoRegW),
         .RegWriteW(RegWriteW),
         .MemRDW(MemRDW),
+        .MemRDSelW(MemRDSelW),
+        .ByteSelW(ByteSelW),
         .ALUResW(ALUResW),
         .RegAddrW(RegAddrW)
     );
+    
+    MEMRD_EXT _memrd_ext(
+        .in(MemRDW),
+        .type(MemRDSelW),
+        .byte_select(ByteSelW),
+        .out(MemRD_ExtendW)
+    );
+
     Mux2 #(32) _memtoreg_selector(
         .a0(ALUResW),
-        .a1(MemRDW),
+        .a1(MemRD_ExtendW),
         .select(MemtoRegW),
         .out(RegDataW)
     );

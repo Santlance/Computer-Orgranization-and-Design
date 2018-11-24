@@ -66,7 +66,7 @@ module ControlUnit(
         (R_Type && Funct==`SRA)||(R_Type && Funct==`SRAV)||(R_Type && Funct==`JALR)||
         (R_Type && Funct==`AND)||(R_Type && Funct==`OR)||(R_Type && Funct==`XOR)||
         (R_Type && Funct==`SLT)||(R_Type && Funct==`SLTU)||
-        Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU
+        Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU
         )?1:0;
 
     assign Extend=(Op==`LW||Op==`SW||Op==`BEQ||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||
@@ -85,6 +85,5 @@ module ControlUnit(
                     (Op==`LH)?3'b011:
                     (Op==`LBU || Op==`SB)?3'b100:
                     (Op==`LB)?3'b101:3'bxxx;
-            
 endmodule // ControlUnit
 `endif
