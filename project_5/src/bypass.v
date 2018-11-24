@@ -12,8 +12,8 @@ module BYPASS(
     input [4:0] RegAddrE,
     input RegWriteM,
     input RegWriteW,
-    output Forward_A_D,
-    output Forward_B_D,
+    output [1:0] Forward_A_D,
+    output [1:0] Forward_B_D,
     output [1:0] Forward_A_E,
     output [1:0] Forward_B_E,
 
@@ -28,9 +28,15 @@ module BYPASS(
 );
 
     // ID forward
-    assign Forward_A_D = (RsD!=5'b0 && RegWriteM && RegAddrM==RsD)?`FW_MD:`FW_NONED;
-    assign Forward_B_D = (RtD!=5'b0 && RegWriteM && RegAddrM==RtD)?`FW_MD:`FW_NONED;
-    
+    assign Forward_A_D = (RsD==5'b0)?`FW_NONED:
+                         (RegWriteM && RsD==RegAddrM)?`FW_MD:
+                         (RegWriteW && RsD==RegAddrW)?`FW_WD:
+                         `FW_NONED;
+    assign Forward_B_D = (RtD==5'b0)?`FW_NONED:
+                         (RegWriteM && RtD==RegAddrM)?`FW_MD:
+                         (RegWriteW && RtD==RegAddrW)?`FW_WD:
+                         `FW_NONED;
+
     // EXE forward
     assign Forward_A_E = (RsE==5'b0)?`FW_NONEE:
                          (RegWriteM && RsE==RegAddrM)?`FW_ME:

@@ -4,6 +4,7 @@
 `include "./branch.v"
 `include "./dm.v"
 `include "./ext.v"
+`include "./judge.v"
 `include "./grf.v"
 `include "./im.v"
 `include "./mux.v"
@@ -21,16 +22,6 @@ module mips(
     input clk,
     input reset
 );
-    // 流水线寄存器控制信号
-    wire clr_if_id,
-         clr_id_ex,
-         clr_ex_mem,
-         clr_mem_wb;
-    wire en_if_id,
-         en_id_ex,
-         en_ex_mem,
-         en_mem_wb;
-
     // EX/MEM/WB
     wire clk_re=~clk;
 
@@ -64,7 +55,7 @@ module mips(
          Jump_RD,
          LinkD;
     wire [3:0] ALUCtrlD;
-    wire [3:0] BranchOpD;
+    wire [3:0] JudgeOpD;
     wire [2:0] DataTypeD;
 
     wire [`Word] RD1D,
@@ -75,7 +66,8 @@ module mips(
                  J_addrD,
                  B_addrD,
                  PC8D;
-    wire branchD;
+    wire JudgeResD,
+         branchD;
 
     // EXE
     wire MemtoRegE,
@@ -124,9 +116,9 @@ module mips(
     wire [4:0] RegAddrW;
 
     // Bypass
-    wire Forward_A_D,
-         Forward_B_D;
-    wire [1:0] Forward_A_E,
+    wire [1:0] Forward_A_D,
+               Forward_B_D,
+               Forward_A_E,
                Forward_B_E;
     wire Stall_PC,
          Stall_IF_ID;
@@ -198,7 +190,7 @@ module mips(
         .MemtoReg(MemtoRegD),
         .MemWrite(MemWriteD),
         .Branch(BranchD),
-        .BranchOp(BranchOpD),
+        .JudgeOp(JudgeOpD),
         .ALUCtrl(ALUCtrlD),
         .ALUASrc(ALUASrcD),
         .ALUSrc(ALUSrcD),
@@ -225,32 +217,41 @@ module mips(
         .PC(PCD)
     );
 
-    Mux2 #(32) _RD1D_forward_selector(
+    Mux4 #(32) _RD1D_forward_selector(
         .a0(_RD1D),
         .a1(ALUResM),
+        .a2(RegDataW),
+        .a3(32'bx),
         .select(Forward_A_D),
         .out(RD1D)
     );
-    Mux2 #(32) _RD2D_forward_selector(
+    Mux4 #(32) _RD2D_forward_selector(
         .a0(_RD2D),
         .a1(ALUResM),
+        .a2(RegDataW),
+        .a3(32'bx),
         .select(Forward_B_D),
         .out(RD2D)
     );
 
-    Branch _branchD(
+    Judge _judge(
         .SrcA(RD1D),
         .SrcB(RD2D),
+        .JudgeOp(JudgeOpD),
+        .JudgeRes(JudgeResD)
+    );
+
+    Branch _branchD(
         .Branch(BranchD),
-        .BranchOp(BranchOpD),
+        .JudgeRes(JudgeResD),
+        .J_Index(J_IndexD),
         .PC4(PC4D),
         .Imm(ImmD),
         .pc_branch(branchD),
         .B_addr(B_addrD),
+        .J_addr(J_addrD),
         .PC8(PC8D)
     );
-
-    assign J_addrD={PC4D[31:28],J_IndexD,2'b00};
 
     EXT #(16,32) _imm_extenderD(
         .in(ImmD),
@@ -264,21 +265,18 @@ module mips(
     );
 
     ID_EX _id_ex(
-        .clk(clk_re),
+        .clk(clk),
         .reset(reset),
         .clr(Flush_ID_EX),
         .en(Stall_ID_EX),
         .MemtoRegD(MemtoRegD),
         .MemWriteD(MemWriteD),
-        .BranchD(BranchD),
-        .BranchOpD(BranchOpD),
         .ALUCtrlD(ALUCtrlD),
         .ALUASrcD(ALUASrcD),
         .ALUSrcD(ALUSrcD),
         .RegDstD(RegDstD),
         .RegWriteD(RegWriteD),
         .ExtendD(ExtendD),
-        .JumpD(JumpD),
         .Jump_RD(Jump_RD),
         .LinkD(LinkD),
         .DataTypeD(DataTypeD),
@@ -298,7 +296,6 @@ module mips(
         .RegWriteE(RegWriteE),
         .RegDstE(RegDstE),
         .ExtendE(ExtendE),
-        .JumpE(JumpE),
         .Jump_RE(Jump_RE),
         .LinkE(LinkE),
         .DataTypeE(DataTypeE),
@@ -376,7 +373,7 @@ module mips(
     );
 
     EX_MEM _ex_mem(
-        .clk(clk),
+        .clk(clk_re),
         .reset(reset),
         .clr(Flush_EX_MEM),
         .en(Stall_EX_MEM),

@@ -106,19 +106,21 @@
 `define ALU_LT  4'b1010     // Less than, signed
 `define ALU_LTU 4'b1011     // Less than, unsigned, (0||SrcA)<(0||SrcB)
 
-// Branch operations
+// Judge operations
 
-`define B_EQ    4'b0000     // BEQ
-`define B_NE    4'b0001     // BNE
-`define B_GTZ   4'b0010     // BGTZ
-`define B_LEZ   4'b0011     // BLEZ
-`define B_GEZ   4'b0100     // BGEZ
-`define B_LTZ   4'b0101     // BLTZ
+`define EQ    4'b0000     // EQ
+`define NE    4'b0001     // NE
+`define GTZ   4'b0010     // GTZ
+`define LEZ   4'b0011     // LEZ
+`define GEZ   4'b0100     // GEZ
+`define LTZ   4'b0101     // LTZ
 
 // Forward
 
-`define FW_NONED 1'b0       // No forward
-`define FW_MD    1'b1       // MEM to ID
+`define FW_NONED 2'b00       // No forward
+`define FW_MD    2'b01       // MEM to ID
+`define FW_WD    2'b10       // WB to ID
+
 
 `define FW_NONEE 2'b00
 `define FW_ME    2'b01       // MEM to EXE

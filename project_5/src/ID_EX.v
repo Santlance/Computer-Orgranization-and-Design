@@ -14,15 +14,12 @@ module ID_EX(
 
     input MemtoRegD,
     input MemWriteD,
-    input BranchD,
-    input [3:0] BranchOpD,
     input [3:0] ALUCtrlD,
     input ALUASrcD,
     input ALUSrcD,
     input RegDstD,
     input RegWriteD,
     input ExtendD,
-    input JumpD,
     input Jump_RD,
     input LinkD,
     input [2:0] DataTypeD,
@@ -43,7 +40,6 @@ module ID_EX(
     output reg RegWriteE,
     output reg RegDstE,
     output reg ExtendE,
-    output reg JumpE,
     output reg Jump_RE,
     output reg LinkE,
     output reg [2:0] DataTypeE,
@@ -69,7 +65,6 @@ module ID_EX(
         RegWriteE<=0;
         RegDstE<=0;
         ExtendE<=0;
-        JumpE<=0;
         Jump_RE<=0;
         LinkE<=0;
         DataTypeE<=0;
@@ -94,7 +89,6 @@ module ID_EX(
                 RegWriteE<=0;
                 RegDstE<=0;
                 ExtendE<=0;
-                JumpE<=0;
                 Jump_RE<=0;
                 LinkE<=0;
                 DataTypeE<=0;
@@ -119,7 +113,6 @@ module ID_EX(
                     RegWriteE<=0;
                     RegDstE<=0;
                     ExtendE<=0;
-                    JumpE<=0;
                     Jump_RE<=0;
                     LinkE<=0;
                     DataTypeE<=0;
@@ -143,7 +136,6 @@ module ID_EX(
                     RegWriteE<=RegWriteD;
                     RegDstE<=RegDstD;
                     ExtendE<=ExtendD;
-                    JumpE<=JumpD;
                     Jump_RE<=Jump_RD;
                     LinkE<=LinkD;
                     DataTypeE<=DataTypeD;

@@ -7,7 +7,7 @@ module ControlUnit(
     output MemtoReg,
     output MemWrite,
     output Branch,
-    output [3:0] BranchOp,
+    output [3:0] JudgeOp,
     output [3:0] ALUCtrl,
     output ALUASrc,
     output ALUSrc,
@@ -32,12 +32,12 @@ module ControlUnit(
                    Op==`BGTZ ||
                    Op==`BLEZ ||
                    Op==`BGEZ_OP)?1:0;
-    assign BranchOp=(Op==`BEQ)?`B_EQ:
-                    (Op==`BNE)?`B_NE:
-                    (Op==`BGTZ)?`B_GTZ:
-                    (Op==`BLEZ)?`B_LEZ:
-                    (Op==`BGEZ_OP && Rt==`BGEZ_RT)?`B_GEZ:
-                    (Op==`BLTZ_OP && Rt==`BLTZ_RT)?`B_LTZ:4'bxxxx;
+    assign JudgeOp=(Op==`BEQ)?`EQ:
+                    (Op==`BNE)?`NE:
+                    (Op==`BGTZ)?`GTZ:
+                    (Op==`BLEZ)?`LEZ:
+                    (Op==`BGEZ_OP && Rt==`BGEZ_RT)?`GEZ:
+                    (Op==`BLTZ_OP && Rt==`BLTZ_RT)?`LTZ:4'bxxxx;
     assign ALUCtrl=(
         (R_Type && Funct==`ADDU)||Op==`ADDIU||Op==`LW||Op==`SW||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB
         )?`ALU_ADD:
