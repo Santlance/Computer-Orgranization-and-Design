@@ -11,7 +11,8 @@ module Branch(
     input [`Word] PC4,
     input [`Half] Imm,
     output pc_branch,
-    output [`Word] B_addr
+    output [`Word] B_addr,
+    output [`Word] PC8
 );
     wire [`Word] branch_imm;
     assign pc_branch =(Branch==0)?1'b0:
@@ -27,5 +28,6 @@ module Branch(
         .out(branch_imm)
     );
     assign B_addr=branch_imm+PC4;
+    assign PC8=PC4+4;
 endmodule // Branch
 `endif

@@ -25,7 +25,7 @@ module ALU(
                 `ALU_LUI : ALURes <= {SrcB[`Half0], 16'b0};          // LUI
                 `ALU_LT  : ALURes <= $signed(SrcA) < $signed(SrcB);  // Less than, signed
                 `ALU_LTU : ALURes <= {1'b0,SrcA} < {1'b0,SrcB};            // Less than, unsigned
-                default : ALURes <= 0;
+                default  : ALURes <= SrcA;
             endcase
         end
     assign Zero=(ALURes==0)?1'b1:1'b0;

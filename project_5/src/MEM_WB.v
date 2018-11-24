@@ -29,7 +29,7 @@ module MEM_WB(
         ALUResW<=0;
         RegAddrW<=0;
     end
-    always @(posedge clk )
+    always @(posedge clk)
     begin
         if(reset)
             begin
@@ -39,7 +39,7 @@ module MEM_WB(
                 ALUResW<=0;
                 RegAddrW<=0;
             end
-        else if(en)
+        else if(en!=1)
             if(clr)
                 begin
                     MemtoRegW<=0;

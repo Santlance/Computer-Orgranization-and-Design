@@ -14,6 +14,7 @@
 `include "./ID_EX.v"
 `include "./EX_MEM.v"
 `include "./MEM_WB.v"
+`include "./bypass.v"
 `timescale 1ns / 1ps
 // TODO:: 修改Branch
 module mips(
@@ -21,14 +22,17 @@ module mips(
     input reset
 );
     // 流水线寄存器控制信号
-    reg clr_if_id,
-        clr_id_ex,
-        clr_ex_mem,
-        clr_mem_wb;
-    reg en_if_id,
-        en_id_ex,
-        en_ex_mem,
-        en_mem_wb;
+    wire clr_if_id,
+         clr_id_ex,
+         clr_ex_mem,
+         clr_mem_wb;
+    wire en_if_id,
+         en_id_ex,
+         en_ex_mem,
+         en_mem_wb;
+
+    // EX/MEM/WB
+    wire clk_re=~clk;
 
     // IF
     wire [`Word] nPCF;
@@ -69,7 +73,8 @@ module mips(
     wire [`Word] Imm_ExtendD,
                  Shamt_ExtendD,
                  J_addrD,
-                 B_addrD;
+                 B_addrD,
+                 PC8D;
     wire branchD;
 
     // EXE
@@ -95,7 +100,8 @@ module mips(
     
     wire [`Word] ALUAE,
                  ALUBE,
-                 ALUResE;
+                 ALUResE,
+                 PC8E;
     wire [4:0] RegAddrE;
 
     // MEM
@@ -117,11 +123,28 @@ module mips(
                  RegDataW;
     wire [4:0] RegAddrW;
 
+    // Bypass
+    wire Forward_A_D,
+         Forward_B_D;
+    wire [1:0] Forward_A_E,
+               Forward_B_E;
+    wire Stall_PC,
+         Stall_IF_ID;
+    wire Stall_ID_EX=0,
+         Stall_EX_MEM=0,
+         Stall_MEM_WB=0;
+    wire Flush_IF_ID=0,
+         Flush_EX_MEM=0,
+         Flush_MEM_WB=0;
+    wire Flush_ID_EX;
+
     // test
     wire [`Word] PCF,PCD,PCE,PCM;
+
     PC _pcF(
         .clk(clk),
         .reset(reset),
+        .we(Stall_PC),
         .nPC(nPCF),
         .PC(current_PCF)
     );
@@ -144,11 +167,12 @@ module mips(
         .nPC(nPCF)
     );
 
+    assign PCF=current_PCF;
     IF_ID _if_id(
         .clk(clk),
         .reset(reset),
-        .clr(clr_if_id),
-        .en(en_if_id),
+        .clr(Flush_IF_ID),
+        .en(Stall_IF_ID),
         .InstF(InstF),
         .PC4F(PC4F),
         .InstD(InstD),
@@ -187,6 +211,7 @@ module mips(
         .DataType(DataTypeD)
     );
 
+    wire [`Word] _RD1D,_RD2D;
     GRF _grfD(
         .clk(clk),
         .reset(reset),
@@ -195,9 +220,22 @@ module mips(
         .A2(RtD),
         .A3(RegAddrW),
         .wd(RegDataW),
-        .r1(RD1D),
-        .r2(RD2D),
+        .r1(_RD1D),
+        .r2(_RD2D),
         .PC(PCD)
+    );
+
+    Mux2 #(32) _RD1D_forward_selector(
+        .a0(_RD1D),
+        .a1(ALUResM),
+        .select(Forward_A_D),
+        .out(RD1D)
+    );
+    Mux2 #(32) _RD2D_forward_selector(
+        .a0(_RD2D),
+        .a1(ALUResM),
+        .select(Forward_B_D),
+        .out(RD2D)
     );
 
     Branch _branchD(
@@ -208,7 +246,8 @@ module mips(
         .PC4(PC4D),
         .Imm(ImmD),
         .pc_branch(branchD),
-        .B_addr(B_addrD)
+        .B_addr(B_addrD),
+        .PC8(PC8D)
     );
 
     assign J_addrD={PC4D[31:28],J_IndexD,2'b00};
@@ -225,10 +264,10 @@ module mips(
     );
 
     ID_EX _id_ex(
-        .clk(clk),
+        .clk(clk_re),
         .reset(reset),
-        .clr(clr_id_ex),
-        .en(en_if_id),
+        .clr(Flush_ID_EX),
+        .en(Stall_ID_EX),
         .MemtoRegD(MemtoRegD),
         .MemWriteD(MemWriteD),
         .BranchD(BranchD),
@@ -250,6 +289,7 @@ module mips(
         .RdD(RdD),
         .Imm_ExtendD(Imm_ExtendD),
         .Shamt_ExtendD(Shamt_ExtendD),
+        .PC8D(PC8D),
         .MemtoRegE(MemtoRegE),
         .MemWriteE(MemWriteE),
         .ALUCtrlE(ALUCtrlE),
@@ -269,28 +309,62 @@ module mips(
         .RdE(RdE),
         .Imm_ExtendE(Imm_ExtendE),
         .Shamt_ExtendE(Shamt_ExtendE),
+        .PC8E(PC8E),
         .PCD(PCD),
         .PCE(PCE)
     );
 
-    Mux2 #(`Word_Size) _ALU_srcA_selector(
+    wire [`Word] _RD1E,_ALUAE;
+    Mux4 #(`Word_Size) _ALUAE_forward_selector(
         .a0(RD1E),
+        .a1(ALUResM),
+        .a2(RegDataW),
+        .a3(32'bx),
+        .select(Forward_A_E),
+        .out(_RD1E)
+    );
+    Mux2 #(`Word_Size) _ALU_srcA_shamt_selector(
+        .a0(_RD1E),
         .a1(Shamt_ExtendE),
         .select(ALUASrcE),
+        .out(_ALUAE)
+    );
+    Mux2 #(`Word_Size) _ALU_srcA_link_selector(
+        .a0(_ALUAE),
+        .a1(PC8E),
+        .select(LinkE),
         .out(ALUAE)
     );
 
-    Mux2 #(`Word_Size) _ALU_srcB_selector(
+    wire [`Word] _RD2E;
+    Mux4 #(`Word_Size) _ALUBE_forward_selector(
         .a0(RD2E),
+        .a1(ALUResM),
+        .a2(RegDataW),
+        .a3(32'bx),
+        .select(Forward_B_E),
+        .out(_RD2E)
+    );
+    Mux2 #(`Word_Size) _ALU_srcB_selector(
+        .a0(_RD2E),
         .a1(Imm_ExtendE),
         .select(ALUSrcE),
         .out(ALUBE)
-    );
+    ); 
 
-    Mux2 #(5) _regaddr_selector(
+    wire [4:0] _RegAddrE;
+    Mux2 #(5) _regdst_selector(
         .a0(RtE),
         .a1(RdE),
         .select(RegDstE),
+        .out(_RegAddrE)
+    );
+
+    wire Link_SelectE=LinkE&(~Jump_RE);
+    Mux2 #(5) _reglink_selector(
+        .a0(_RegAddrE),
+        .a1(5'b11111),
+        .select(Link_SelectE),
         .out(RegAddrE)
     );
 
@@ -304,13 +378,13 @@ module mips(
     EX_MEM _ex_mem(
         .clk(clk),
         .reset(reset),
-        .clr(clr_ex_mem),
-        .en(en_ex_mem),
+        .clr(Flush_EX_MEM),
+        .en(Stall_EX_MEM),
         .MemtoRegE(MemtoRegE),
         .MemWriteE(MemWriteE),
         .RegWriteE(RegWriteE),
         .RegAddrE(RegAddrE),
-        .WriteDataE(ALUBE),
+        .WriteDataE(_RD2E),
         .DataTypeE(DataTypeE),
         .ALUResE(ALUResE),
         .RegAddrM(RegAddrM),
@@ -325,20 +399,21 @@ module mips(
     );
 
     DM  _dm(
-        .clk(clk),
+        .clk(clk_re),
         .reset(reset),
         .we(MemWriteM),
         .type(DataTypeM),
-        .addr(ALUResM),
+        .addr_in(ALUResM),
         .wd(WriteDataM),
         .rd(MemRDM),
         .PC(PCM)
     );
+
     MEM_WB _mem_wb(
-        .clk(clk),
+        .clk(clk_re),
         .reset(reset),
-        .clr(clr_mem_wb),
-        .en(en_mem_wb),
+        .clr(Flush_MEM_WB),
+        .en(Stall_MEM_WB),
         .MemtoRegM(MemtoRegM),
         .RegWriteM(RegWriteM),
         .MemRDM(MemRDM),
@@ -355,5 +430,30 @@ module mips(
         .a1(MemRDW),
         .select(MemtoRegW),
         .out(RegDataW)
+    );
+
+    // Hazard Bypass
+    BYPASS _bypass(
+        .RsD(RsD),
+        .RtD(RtD),
+        .RsE(RsE),
+        .RtE(RtE),
+        .RegAddrW(RegAddrW),
+        .RegAddrM(RegAddrM),
+        .RegAddrE(RegAddrE),
+        .RegWriteM(RegWriteM),
+        .RegWriteW(RegWriteW),
+        .Forward_A_D(Forward_A_D),
+        .Forward_B_D(Forward_B_D),
+        .Forward_A_E(Forward_A_E),
+        .Forward_B_E(Forward_B_E),
+        .MemtoRegE(MemtoRegE),
+        .Stall_PC(Stall_PC),
+        .Stall_IF_ID(Stall_IF_ID),
+        .Stall_ID_EX(Stall_ID_EX),
+        .Stall_EX_MEM(Stall_EX_MEM),
+        .Stall_MEM_WB(Stall_MEM_WB),
+        .Flush_IF_ID(Stall_IF_ID),
+        .Flush_ID_EX(Flush_ID_EX)
     );
 endmodule // mips

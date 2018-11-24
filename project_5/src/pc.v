@@ -6,7 +6,7 @@
 module PC(
     input clk,
     input reset,
-    //input we
+    input we,
     input [`Word] nPC,
     output reg [`Word] PC
 );
@@ -21,7 +21,7 @@ module PC(
                 begin
                     PC<=INIT;
                 end
-            else
+            else if(we!=1)
                 begin
                     PC<=nPC;
                 end

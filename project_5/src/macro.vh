@@ -114,3 +114,12 @@
 `define B_LEZ   4'b0011     // BLEZ
 `define B_GEZ   4'b0100     // BGEZ
 `define B_LTZ   4'b0101     // BLTZ
+
+// Forward
+
+`define FW_NONED 1'b0       // No forward
+`define FW_MD    1'b1       // MEM to ID
+
+`define FW_NONEE 2'b00
+`define FW_ME    2'b01       // MEM to EXE
+`define FW_WE    2'b10       // WB to EXE

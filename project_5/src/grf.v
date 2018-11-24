@@ -35,7 +35,7 @@ module GRF(
                 end
             else if(we==1 && A3!=0)
                 begin
-                    $display("@%h: $%d <= %h", PC, A3,wd);
+                    $display("%d@%h: $%d <= %h", $time, PC, A3,wd);
                     if(A3!=0)
                     begin
                         grf[A3]<=wd;

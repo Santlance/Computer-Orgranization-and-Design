@@ -24,26 +24,30 @@ module IF_ID(
     begin
         InstD<=0;
         PC4D<=0;
+        PCD<=0;
     end
 
-    always @(posedge clk) 
+    always @(posedge clk)
     begin
         if(reset)
             begin
                 InstD<=0;
                 PC4D<=0;
+                PCD<=0;
             end
-        else if(en)
+        else if(en!=1)
             begin
                 if(clr)
                     begin
                         InstD<=0;
                         PC4D<=0;
+                        PCD<=0;
                     end
                 else
                     begin
                         InstD<=InstF;
                         PC4D<=PC4F;
+                        PCD<=PCF;
                     end
             end
         end

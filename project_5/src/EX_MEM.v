@@ -36,6 +36,8 @@ module EX_MEM(
         MemtoRegM<=0;
         MemWriteM<=0;
         RegWriteM<=0;
+        DataTypeM<=0;
+        PCM<=0;
     end
     always @(posedge clk)
     begin
@@ -47,8 +49,10 @@ module EX_MEM(
                 MemtoRegM<=0;
                 MemWriteM<=0;
                 RegWriteM<=0;
+                DataTypeM<=0;
+                PCM<=0;
             end
-        else if(en)
+        else if(en!=1)
             if(clr)
                 begin
                     RegAddrM<=0;
@@ -57,6 +61,8 @@ module EX_MEM(
                     MemtoRegM<=0;
                     MemWriteM<=0;
                     RegWriteM<=0;
+                    DataTypeM<=0;
+                    PCM<=0;
                 end
             else
                 begin
@@ -66,6 +72,8 @@ module EX_MEM(
                     MemtoRegM<=MemtoRegE;
                     MemWriteM<=MemWriteE;
                     RegWriteM<=RegWriteE;
+                    DataTypeM<=DataTypeE;
+                    PCM<=PCE;
                 end
     end
 endmodule // EX_MEM
