@@ -50,6 +50,9 @@
 `define SUB     6'b100010   // Funct
 `define SUBU    6'b100011   // Funct
 `define XOR     6'b100110   // Funct
+`define MOVZ    6'b001010   // Funct
+`define MOVN    6'b001011   // Funct
+
 
 // Load
 `define LB      6'b100000   // OpCode
@@ -68,6 +71,8 @@
 `define BNE     6'b000101   // OpCode
 `define BGTZ    6'b000111   // OpCode
 `define BLEZ    6'b000110   // OpCode
+`define BEQL    6'b010100   // OpCode
+`define BNEL    6'b010101   // OpCode
 
 // Special-Branch
 `define BGEZ_OP 6'b000001   // OpCode

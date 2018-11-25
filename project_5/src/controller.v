@@ -17,7 +17,9 @@ module ControlUnit(
     output Jump,
     output Jump_R,
     output Link,
-    output [2:0] DataType
+    output [2:0] DataType,
+    output JudgeMove,
+    output Likely
 );
     wire [5:0] Op=inst[`Inst_OP];
     wire [4:0] Rt=inst[`Inst_RT];
@@ -27,13 +29,13 @@ module ControlUnit(
     
     assign MemtoReg=(Op==`LW||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU)?1:0;
     assign MemWrite=(Op==`SW||Op==`SH||Op==`SB)?1:0;
-    assign Branch=(Op==`BEQ ||
-                   Op==`BNE ||
+    assign Branch=(Op==`BEQ || Op==`BEQL ||
+                   Op==`BNE || Op==`BNEL ||
                    Op==`BGTZ ||
                    Op==`BLEZ ||
                    Op==`BGEZ_OP)?1:0;
-    assign JudgeOp=(Op==`BEQ)?`EQ:
-                    (Op==`BNE)?`NE:
+    assign JudgeOp=(Op==`BEQ ||(R_Type && Funct==`MOVZ) || (Op==`BEQL))?`EQ:
+                    (Op==`BNE ||(R_Type && Funct==`MOVN) || Op==`BNEL)?`NE:
                     (Op==`BGTZ)?`GTZ:
                     (Op==`BLEZ)?`LEZ:
                     (Op==`BGEZ_OP && Rt==`BGEZ_RT)?`GEZ:
@@ -45,6 +47,7 @@ module ControlUnit(
         (Op==`LUI)?`ALU_LUI:
         (Op==`ANDI||(R_Type && Funct==`AND))?`ALU_AND:
         (Op==`ORI||(R_Type && Funct==`OR))?`ALU_OR:
+        (R_Type && Funct==`NOR)?`ALU_NOR:
         (Op==`XORI||(R_Type && Funct==`XOR))?`ALU_XOR:
         ((R_Type && Funct==`SLL)||(R_Type && Funct==`SLLV))?`ALU_SLL:
         ((R_Type && Funct==`SRA)||(R_Type && Funct==`SRAV))?`ALU_SRA:
@@ -65,13 +68,14 @@ module ControlUnit(
         (R_Type && Funct==`SRL)||(R_Type && Funct==`SRLV)||(R_Type && Funct==`SUBU)||
         (R_Type && Funct==`SRA)||(R_Type && Funct==`SRAV)||(R_Type && Funct==`JALR)||
         (R_Type && Funct==`AND)||(R_Type && Funct==`OR)||(R_Type && Funct==`XOR)||
-        (R_Type && Funct==`SLT)||(R_Type && Funct==`SLTU)||
+        (R_Type && Funct==`NOR)||(R_Type && Funct==`SLT)||(R_Type && Funct==`SLTU)||
+        (R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN)||
         Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU
         )?1:0;
 
     assign Extend=(Op==`LW||Op==`SW||Op==`BEQ||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||
         Op==`ADDIU||Op==`SLTI||Op==`SLTIU||Op==`BNE||Op==`BGTZ||Op==`BLEZ||(Op==`BGEZ_OP && Rt==`BGEZ_RT)||
-        (Op==`BLTZ_OP && Rt==`BLTZ_RT)
+        (Op==`BLTZ_OP && Rt==`BLTZ_RT)||Op==`BEQL||Op==`BNEL
     )?1:0;
 
     assign Jump=(Op==`JAL||Op==`J)?1:0;
@@ -85,5 +89,9 @@ module ControlUnit(
                     (Op==`LH)?3'b011:
                     (Op==`LBU || Op==`SB)?3'b100:
                     (Op==`LB)?3'b101:3'bxxx;
+    
+    assign JudgeMove = ((R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN))?1:0;
+
+    assign Likely = (Op==`BEQL || Op==`BNEL)?1:0;
 endmodule // ControlUnit
 `endif

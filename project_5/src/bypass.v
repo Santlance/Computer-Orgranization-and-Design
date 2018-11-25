@@ -12,12 +12,14 @@ module BYPASS(
     input [4:0] RegAddrE,
     input RegWriteM,
     input RegWriteW,
+    input MemtoRegE,
+    input branchD,
+    input LikelyD,
     output [1:0] Forward_A_D,
     output [1:0] Forward_B_D,
     output [1:0] Forward_A_E,
     output [1:0] Forward_B_E,
 
-    input MemtoRegE,
     output Stall_PC,
     output Stall_IF_ID,
     output Stall_ID_EX,
@@ -46,11 +48,13 @@ module BYPASS(
                          (RegWriteM && RtE==RegAddrM)?`FW_ME:
                          (RegWriteW && RtE==RegAddrW)?`FW_WE:
                          `FW_NONEE;
+
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
     assign Stall_PC = Stall_Mem;
     assign Stall_IF_ID = Stall_Mem;
     assign Flush_ID_EX = Stall_Mem;
+    assign Flush_IF_ID = (LikelyD && ~branchD)?1:0;
 endmodule // BYPASS
 `endif
 

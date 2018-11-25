@@ -17,7 +17,7 @@
 `include "./MEM_WB.v"
 `include "./bypass.v"
 `timescale 1ns / 1ps
-// TODO:: 修改Branch
+
 module mips(
     input clk,
     input reset
@@ -38,6 +38,7 @@ module mips(
     wire [`Inst_RS]     RsD;
     wire [`Inst_RT]     RtD;
     wire [`Inst_RD]     RdD;
+    wire [`Inst_RD]     _RdD;
     wire [`Inst_Imm]    ImmD;
     wire [`Inst_S]      ShamtD;
     wire [`Inst_Funct]  FunctD;
@@ -53,13 +54,16 @@ module mips(
          ExtendD,
          JumpD,
          Jump_RD,
-         LinkD;
+         LinkD,
+         JudgeMoveD,
+         LikelyD;
     wire [3:0] ALUCtrlD;
     wire [3:0] JudgeOpD;
     wire [2:0] DataTypeD;
 
     wire [`Word] RD1D,
-                 RD2D;
+                 RD2D,
+                 JudgeAD;
 
     wire [`Word] Imm_ExtendD,
                  Shamt_ExtendD,
@@ -128,10 +132,10 @@ module mips(
     wire Stall_ID_EX=0,
          Stall_EX_MEM=0,
          Stall_MEM_WB=0;
-    wire Flush_IF_ID=0,
-         Flush_EX_MEM=0,
+    wire Flush_EX_MEM=0,
          Flush_MEM_WB=0;
-    wire Flush_ID_EX;
+    wire Flush_IF_ID,
+         Flush_ID_EX;
 
     // test
     wire [`Word] PCF,PCD,PCE,PCM;
@@ -181,7 +185,7 @@ module mips(
         .op(OpD),
         .rs(RsD),
         .rt(RtD),
-        .rd(RdD),
+        .rd(_RdD),
         .imm(ImmD),
         .shamt(ShamtD),
         .funct(FunctD),
@@ -203,7 +207,9 @@ module mips(
         .Jump(JumpD),
         .Jump_R(Jump_RD),
         .Link(LinkD),
-        .DataType(DataTypeD)
+        .DataType(DataTypeD),
+        .JudgeMove(JudgeMoveD),
+        .Likely(LikelyD)
     );
 
     wire [`Word] _RD1D,_RD2D;
@@ -237,11 +243,24 @@ module mips(
         .out(RD2D)
     );
 
+    Mux2 #(32) _judge_srcB_selector(
+        .a0(RD1D),
+        .a1(32'b0),
+        .select(JudgeMoveD),
+        .out(JudgeAD)
+    );
     Judge _judge(
-        .SrcA(RD1D),
+        .SrcA(JudgeAD),
         .SrcB(RD2D),
         .JudgeOp(JudgeOpD),
         .JudgeRes(JudgeResD)
+    );
+    wire JudgeMoveSelD = JudgeMoveD & (~JudgeResD);
+    Mux2 #(5) _judge_rd_selector(
+        .a0(_RdD),
+        .a1(5'b0),
+        .select(JudgeMoveSelD),
+        .out(RdD)
     );
 
     Branch _branchD(
@@ -462,12 +481,14 @@ module mips(
         .Forward_A_E(Forward_A_E),
         .Forward_B_E(Forward_B_E),
         .MemtoRegE(MemtoRegE),
+        .branchD(branchD),
+        .LikelyD(LikelyD),
         .Stall_PC(Stall_PC),
         .Stall_IF_ID(Stall_IF_ID),
         .Stall_ID_EX(Stall_ID_EX),
         .Stall_EX_MEM(Stall_EX_MEM),
         .Stall_MEM_WB(Stall_MEM_WB),
-        .Flush_IF_ID(Stall_IF_ID),
+        .Flush_IF_ID(Flush_IF_ID),
         .Flush_ID_EX(Flush_ID_EX)
     );
 endmodule // mips
