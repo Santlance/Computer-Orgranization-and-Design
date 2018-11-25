@@ -31,7 +31,9 @@ module ID_EX(
     input [`Word] Imm_ExtendD,
     input [`Word] Shamt_ExtendD,
     input [`Word] PC8D,
-
+    input [1:0] MulOpD,
+    input MTHILOD,
+    input [1:0] MFHILOD,
     output reg MemtoRegE,
     output reg MemWriteE,
     output reg [3:0] ALUCtrlE,
@@ -51,6 +53,9 @@ module ID_EX(
     output reg [`Word] Imm_ExtendE,
     output reg [`Word] Shamt_ExtendE,
     output reg [`Word] PC8E,
+    output reg [1:0] MulOpE,
+    output reg MTHILOE,
+    output reg [1:0] MFHILOE,
 
     input [`Word] PCD,
     output reg [`Word] PCE              // for test
@@ -77,6 +82,9 @@ module ID_EX(
         Shamt_ExtendE<=0;
         PC8E<=0;
         PCE<=0;
+        MulOpE<=0;
+        MTHILOE<=0;
+        MFHILOE<=0;
     end
     always @(posedge clk)
         if(reset)
@@ -101,6 +109,9 @@ module ID_EX(
                 Shamt_ExtendE<=0;
                 PC8E<=0;
                 PCE<=0;
+                MulOpE<=0;
+                MTHILOE<=0;
+                MFHILOE<=0;
             end
         else if(en!=1)
             if(clr)
@@ -125,6 +136,9 @@ module ID_EX(
                     Shamt_ExtendE<=0;
                     PC8E<=0;
                     PCE<=0;
+                    MulOpE<=0;
+                    MTHILOE<=0;
+                    MFHILOE<=0;
                 end
             else
                 begin
@@ -148,6 +162,9 @@ module ID_EX(
                     Shamt_ExtendE<=Shamt_ExtendD;
                     PC8E<=PC8D;
                     PCE<=PCD;
+                    MulOpE<=MulOpD;
+                    MTHILOE<=MTHILOD;
+                    MFHILOE<=MFHILOD;
                 end
 endmodule //ID_EX
 `endif

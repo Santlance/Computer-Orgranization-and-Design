@@ -1,21 +1,14 @@
 `timescale 1ns / 1ps
-module mips_tb();
+module mips_tb;
     reg clk;
     reg reset;
     initial
         begin
-            clk=1;
-            forever #10 
-                begin
-                    clk=!clk;
-                    //$display("%h",mips._im.Inst);
-                end
-        end
-    initial
-        begin
+            clk=0;
             reset=1;
-            #40
+            #40;
             reset=0;
+            forever #10 clk=~clk;
         end
-    mips mips(clk,reset);
+    mips _mips(clk,reset);
 endmodule // mips_tb

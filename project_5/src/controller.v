@@ -19,7 +19,10 @@ module ControlUnit(
     output Link,
     output [2:0] DataType,
     output JudgeMove,
-    output Likely
+    output Likely,
+    output [1:0] MulOp,
+    output MTHILO,
+    output [1:0] MFHILO
 );
     wire [5:0] Op=inst[`Inst_OP];
     wire [4:0] Rt=inst[`Inst_RT];
@@ -70,6 +73,7 @@ module ControlUnit(
         (R_Type && Funct==`AND)||(R_Type && Funct==`OR)||(R_Type && Funct==`XOR)||
         (R_Type && Funct==`NOR)||(R_Type && Funct==`SLT)||(R_Type && Funct==`SLTU)||
         (R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN)||
+        (R_Type && Funct==`MFHI)||(R_Type && Funct==`MFLO)||
         Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU
         )?1:0;
 
@@ -93,5 +97,17 @@ module ControlUnit(
     assign JudgeMove = ((R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN))?1:0;
 
     assign Likely = (Op==`BEQL || Op==`BNEL)?1:0;
+
+    assign MulOp = (R_Type && Funct==`MULTU)?2'b00:
+                   (R_Type && Funct==`MULT)?2'b01:
+                   (R_Type && Funct==`DIVU)?2'b10:
+                   (R_Type && Funct==`DIV)?2'b11:
+                   2'bxx;
+    assign MTHILO = (R_Type && Funct==`MTLO)?1'b0:
+                    (R_Type && Funct==`MTHI)?1'b1:
+                    1'bx;
+    assign MFHILO = (R_Type && Funct==`MFLO)?2'b01:
+                    (R_Type && Funct==`MFHI)?2'b10:
+                    2'b00;
 endmodule // ControlUnit
 `endif

@@ -15,6 +15,10 @@ module BYPASS(
     input MemtoRegE,
     input branchD,
     input LikelyD,
+    input [1:0] MulOpD,
+    input MTHILOD,
+    input [1:0] MFHILOD,
+    input Mul_BusyE,
     output [1:0] Forward_A_D,
     output [1:0] Forward_B_D,
     output [1:0] Forward_A_E,
@@ -49,13 +53,18 @@ module BYPASS(
                          (RegWriteW && RtE==RegAddrW)?`FW_WE:
                          `FW_NONEE;
 
+    // Load Stall
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
-    assign Stall_PC = Stall_Mem;
-    assign Stall_IF_ID = Stall_Mem;
-    assign Flush_ID_EX = Stall_Mem;
+    // Multiply Stall
+    wire MulOp = (MulOpD!=2'bxx)?1:0;
+    wire MTHILO = (MTHILOD!=1'bx)?1:0;
+    wire MFHILO = (MFHILOD!=2'b00)?1:0;
+    wire Stall_Mul = Mul_BusyE && (MulOp || MTHILO || MFHILO);
+
+    assign Stall_PC = (Stall_Mem || Stall_Mul)?1:0;
+    assign Stall_IF_ID = (Stall_Mem || Stall_Mul)?1:0;
+    assign Flush_ID_EX = (Stall_Mem || Stall_Mul)?1:0;
     assign Flush_IF_ID = (LikelyD && ~branchD)?1:0;
 endmodule // BYPASS
 `endif
-
-// MOVEZ之类的也可以在这里解决

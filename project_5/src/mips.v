@@ -16,6 +16,7 @@
 `include "./EX_MEM.v"
 `include "./MEM_WB.v"
 `include "./bypass.v"
+`include "./multiplier.v"
 `timescale 1ns / 1ps
 
 module mips(
@@ -61,6 +62,10 @@ module mips(
     wire [3:0] JudgeOpD;
     wire [2:0] DataTypeD;
 
+    wire [1:0] MulOpD;
+    wire [1:0] MFHILOD;
+    wire MTHILOD;
+
     wire [`Word] RD1D,
                  RD2D,
                  JudgeAD;
@@ -94,10 +99,18 @@ module mips(
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
+    wire [1:0] MulOpE;
+    wire [1:0] MFHILOE;
+    wire MTHILOE;
+    wire Mul_BusyE;
+
     wire [`Word] ALUAE,
                  ALUBE,
                  ALUResE,
-                 PC8E;
+                 PC8E,
+                 HIE,
+                 LOE,
+                 _ALUResE;
     wire [4:0] RegAddrE;
 
     // MEM
@@ -138,7 +151,7 @@ module mips(
          Flush_ID_EX;
 
     // test
-    wire [`Word] PCF,PCD,PCE,PCM;
+    wire [`Word] PCF,PCD,PCE,PCM,PCW;
 
     PC _pcF(
         .clk(clk),
@@ -174,6 +187,7 @@ module mips(
         .en(Stall_IF_ID),
         .InstF(InstF),
         .PC4F(PC4F),
+
         .InstD(InstD),
         .PC4D(PC4D),
         .PCF(PCF),
@@ -223,7 +237,7 @@ module mips(
         .wd(RegDataW),
         .r1(_RD1D),
         .r2(_RD2D),
-        .PC(PCD)
+        .PC(PCW)
     );
 
     Mux4 #(32) _RD1D_forward_selector(
@@ -310,6 +324,10 @@ module mips(
         .Imm_ExtendD(Imm_ExtendD),
         .Shamt_ExtendD(Shamt_ExtendD),
         .PC8D(PC8D),
+        .MulOpD(MulOpD),
+        .MTHILOD(MTHILOD),
+        .MFHILOD(MFHILOD),
+
         .MemtoRegE(MemtoRegE),
         .MemWriteE(MemWriteE),
         .ALUCtrlE(ALUCtrlE),
@@ -329,6 +347,10 @@ module mips(
         .Imm_ExtendE(Imm_ExtendE),
         .Shamt_ExtendE(Shamt_ExtendE),
         .PC8E(PC8E),
+        .MulOpE(MulOpE),
+        .MTHILOE(MTHILOE),
+        .MFHILOE(MFHILOE),
+
         .PCD(PCD),
         .PCE(PCE)
     );
@@ -386,12 +408,33 @@ module mips(
         .select(Link_SelectE),
         .out(RegAddrE)
     );
+    
+    Multiplier _multiplier(
+        .clk(clk_re),
+        .reset(reset),
+        .MTHILO(MTHILOE),
+        .SrcA(ALUAE),
+        .SrcB(ALUBE),
+        .MulOp(MulOpE),
+        .HI(HIE),
+        .LO(LOE),
+        .busy(Mul_BusyE)
+    );
 
     ALU _aluD(
         .SrcA(ALUAE),
         .SrcB(ALUBE),
         .ALUCtrl(ALUCtrlE),
-        .ALURes(ALUResE)
+        .ALURes(_ALUResE)
+    );
+
+    Mux4 #(32) _mfhilo_selectorE(
+        .a0(_ALUResE),
+        .a1(LOE),
+        .a2(HIE),
+        .a3(32'bx),
+        .select(MFHILOE),
+        .out(ALUResE)
     );
 
     EX_MEM _ex_mem(
@@ -406,6 +449,7 @@ module mips(
         .WriteDataE(_RD2E),
         .DataTypeE(DataTypeE),
         .ALUResE(ALUResE),
+
         .RegAddrM(RegAddrM),
         .WriteDataM(WriteDataM),
         .ALUResM(ALUResM),
@@ -413,6 +457,7 @@ module mips(
         .MemWriteM(MemWriteM),
         .DataTypeM(DataTypeM),
         .RegWriteM(RegWriteM),
+
         .PCE(PCE),
         .PCM(PCM)
     );
@@ -442,13 +487,17 @@ module mips(
         .ByteSelM(ByteSelM),
         .ALUResM(ALUResM),
         .RegAddrM(RegAddrM),
+
         .MemtoRegW(MemtoRegW),
         .RegWriteW(RegWriteW),
         .MemRDW(MemRDW),
         .MemRDSelW(MemRDSelW),
         .ByteSelW(ByteSelW),
         .ALUResW(ALUResW),
-        .RegAddrW(RegAddrW)
+        .RegAddrW(RegAddrW),
+
+        .PCM(PCM),
+        .PCW(PCW)
     );
     
     MEMRD_EXT _memrd_ext(

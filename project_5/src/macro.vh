@@ -52,7 +52,14 @@
 `define XOR     6'b100110   // Funct
 `define MOVZ    6'b001010   // Funct
 `define MOVN    6'b001011   // Funct
-
+`define MULT    6'b011000   // Funct
+`define MULTU   6'b011001   // Funct
+`define DIV     6'b011010   // Funct
+`define DIVU    6'b011011   // Funct
+`define MFHI    6'b010000   // FUnct
+`define MFLO    6'b010010   // Funct
+`define MTHI    6'b010001   // Funct
+`define MTLO    6'b010011   // Funct
 
 // Load
 `define LB      6'b100000   // OpCode
