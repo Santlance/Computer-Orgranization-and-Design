@@ -20,8 +20,8 @@ module ControlUnit(
     output [2:0] DataType,
     output JudgeMove,
     output Likely,
-    output [1:0] MulOp,
-    output MTHILO,
+    output [2:0] MulOp,
+    output [1:0] MTHILO,
     output [1:0] MFHILO
 );
     wire [5:0] Op=inst[`Inst_OP];
@@ -98,14 +98,14 @@ module ControlUnit(
 
     assign Likely = (Op==`BEQL || Op==`BNEL)?1'b1:1'b0;
 
-    assign MulOp = (R_Type && Funct==`MULTU)?2'b00:
-                   (R_Type && Funct==`MULT)?2'b01:
-                   (R_Type && Funct==`DIVU)?2'b10:
-                   (R_Type && Funct==`DIV)?2'b11:
-                   2'bxx;
-    assign MTHILO = (R_Type && Funct==`MTLO)?1'b0:
-                    (R_Type && Funct==`MTHI)?1'b1:
-                    1'bx;
+    assign MulOp = (R_Type && Funct==`MULTU)?3'b000:
+                   (R_Type && Funct==`MULT)?3'b001:
+                   (R_Type && Funct==`DIVU)?3'b010:
+                   (R_Type && Funct==`DIV)?3'b011:
+                   3'b100;
+    assign MTHILO = (R_Type && Funct==`MTLO)?2'b00:
+                    (R_Type && Funct==`MTHI)?2'b01:
+                    2'b10;
     assign MFHILO = (R_Type && Funct==`MFLO)?2'b01:
                     (R_Type && Funct==`MFHI)?2'b10:
                     2'b00;

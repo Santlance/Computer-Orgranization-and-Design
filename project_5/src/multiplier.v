@@ -6,10 +6,10 @@
 module Multiplier(
     input clk,
     input reset,
-    input MTHILO,
+    input [1:0] MTHILO,
     input [`Word] SrcA,
     input [`Word] SrcB,
-    input [1:0] MulOp,
+    input [2:0] MulOp,
     output reg [`Word] HI,
     output reg [`Word] LO,
     output busy
@@ -36,23 +36,23 @@ module Multiplier(
         else
             begin
                 case (MulOp)
-                    2'b00:  // unsigned mult
+                    3'b000:  // unsigned mult
                         begin
                             counter<=5;
                             {HI,LO}<=SrcA*SrcB;
                         end
-                    2'b01:
+                    3'b001:
                         begin
                             counter<=5;
                             {HI,LO}<=$signed(SrcA)*$signed(SrcB);
                         end
-                    2'b10:
+                    3'b010:
                         begin
                             counter<=10;
                             HI<=SrcA%SrcB;
                             LO<=SrcA/SrcB;
                         end
-                    2'b11:
+                    3'b011:
                         begin
                             counter<=10;
                             HI<=$signed(SrcA)%$signed(SrcB);
@@ -61,9 +61,9 @@ module Multiplier(
                 endcase
 
                 case (MTHILO)
-                    1'b0:
+                    2'b00:
                         LO<=SrcA;
-                    1'b1:
+                    2'b01:
                         HI<=SrcA;
                 endcase
             end

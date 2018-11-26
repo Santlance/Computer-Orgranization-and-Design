@@ -21,10 +21,8 @@
 
 module mips(
     input clk,
-    input reset,
-    output [`Word] fucking
+    input reset
 );
-    assign fucking=PC4D;
     // EX/MEM/WB
     wire clk_re=~clk;
 
@@ -64,9 +62,9 @@ module mips(
     wire [3:0] JudgeOpD;
     wire [2:0] DataTypeD;
 
-    wire [1:0] MulOpD;
+    wire [2:0] MulOpD;
     wire [1:0] MFHILOD;
-    wire MTHILOD;
+    wire [1:0] MTHILOD;
 
     wire [`Word] RD1D,
                  RD2D,
@@ -101,9 +99,9 @@ module mips(
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
-    wire [1:0] MulOpE;
+    wire [2:0] MulOpE;
     wire [1:0] MFHILOE;
-    wire MTHILOE;
+    wire [1:0] MTHILOE;
     wire Mul_BusyE;
 
     wire [`Word] ALUAE,
