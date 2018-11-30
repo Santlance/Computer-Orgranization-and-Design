@@ -7,14 +7,21 @@ module ALU(
     input [`Word] SrcA,
     input [`Word] SrcB,
     input [3:0] ALUCtrl,
+    input IgnoreExcRI,
     output reg [`Word] ALURes,
+    output ExcOccur,
+    output [4:0] ExcCode,
     output Zero
 );
+
+    wire [32:0] ADD_Res_Temp = {SrcA[31],SrcA} + {SrcB[31],SrcB};
+    wire [32:0] SUB_Res_Temp = {SrcA[31],SrcA} - {SrcB[31],SrcB};
+    
     always @( * )
         begin
             case (ALUCtrl)
-                `ALU_ADD : ALURes <= SrcA + SrcB;                    // ADD
-                `ALU_SUB : ALURes <= SrcA - SrcB;                    // SUB
+                `ALU_ADD : ALURes <= ADD_Res_Temp[31:0];             // ADD
+                `ALU_SUB : ALURes <= SUB_Res_Temp[31:0];             // SUB
                 `ALU_AND : ALURes <= SrcA & SrcB;                    // AND
                 `ALU_OR  : ALURes <= SrcA | SrcB;                    // OR
                 `ALU_XOR : ALURes <= SrcA ^ SrcB;                    // XOR
@@ -29,5 +36,11 @@ module ALU(
             endcase
         end
     assign Zero=(ALURes==0)?1'b1:1'b0;
+
+    wire ADD_SUB_Overflow = ((ALUCtrl==`ALU_ADD && ADD_Res_Temp[32]!=ADD_Res_Temp[31])||
+                             (ALUCtrl==`ALU_SUB && SUB_Res_Temp[32]!=SUB_Res_Temp[31]))
+                             ?1'b1:1'b0;
+    assign ExcOccur = (~IgnoreExcRI && ADD_SUB_Overflow)?1'b1:1'b0;
+    assign ExcCode = ExcOccur?`EXC_OV:5'b0;
 endmodule //
 `endif

@@ -39,7 +39,7 @@ module Multiplier(
                     3'b000:  // unsigned mult
                         begin
                             counter<=5;
-                            {HI,LO}<=SrcA*SrcB;
+                            {HI,LO}<={1'b0,SrcA}*{1'b0,SrcB};
                         end
                     3'b001:
                         begin
@@ -49,8 +49,8 @@ module Multiplier(
                     3'b010:
                         begin
                             counter<=10;
-                            HI<=SrcA%SrcB;
-                            LO<=SrcA/SrcB;
+                            HI<={1'b0,SrcA}%{1'b0,SrcB};
+                            LO<={1'b0,SrcA}/{1'b0,SrcB};
                         end
                     3'b011:
                         begin

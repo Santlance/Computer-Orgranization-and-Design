@@ -20,8 +20,8 @@ module ControlUnit(
     output [2:0] DataType,
     output JudgeMove,
     output Likely,
-    output [1:0] MulOp,
-    output MTHILO,
+    output [2:0] MulOp,
+    output [1:0] MTHILO,
     output [1:0] MFHILO
 );
     wire [5:0] Op=inst[`Inst_OP];
@@ -30,8 +30,8 @@ module ControlUnit(
 
     wire R_Type=(Op==0)?1'b1:1'b0;
     
-    assign MemtoReg=(Op==`LW||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU)?1'b1:1'b0;
-    assign MemWrite=(Op==`SW||Op==`SH||Op==`SB)?1'b1:1'b0;
+    assign MemtoReg=(Op==`LW||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`LWL||Op==`LWR)?1'b1:1'b0;
+    assign MemWrite=(Op==`SW||Op==`SH||Op==`SB||Op==`SWL||Op==`SWR)?1'b1:1'b0;
     assign Branch=(Op==`BEQ || Op==`BEQL ||
                    Op==`BNE || Op==`BNEL ||
                    Op==`BGTZ ||
@@ -44,9 +44,10 @@ module ControlUnit(
                     (Op==`BGEZ_OP && Rt==`BGEZ_RT)?`GEZ:
                     (Op==`BLTZ_OP && Rt==`BLTZ_RT)?`LTZ:4'bxxxx;
     assign ALUCtrl=(
-        (R_Type && Funct==`ADDU)||Op==`ADDIU||Op==`LW||Op==`SW||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB
+        (R_Type && (Funct==`ADDU||Funct==`ADD))||Op==`ADDIU||Op==`ADDI||Op==`LW||Op==`SW||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||
+        Op==`LWL||Op==`LWR||Op==`SWL||Op==`SWR
         )?`ALU_ADD:
-        (R_Type && Funct==`SUBU)?`ALU_SUB:
+        (R_Type && (Funct==`SUBU||Funct==`SUB))?`ALU_SUB:
         (Op==`LUI)?`ALU_LUI:
         (Op==`ANDI||(R_Type && Funct==`AND))?`ALU_AND:
         (Op==`ORI||(R_Type && Funct==`OR))?`ALU_OR:
@@ -61,7 +62,8 @@ module ControlUnit(
     assign ALUASrc=((R_Type && Funct==`SLL)||(R_Type && Funct==`SRA)||(R_Type && Funct==`SRL))?1'b1:1'b0;
 
     assign ALUSrc=(
-        Op==`LUI || Op==`LW || Op==`SW || Op==`LH || Op==`LHU || Op==`SH || Op==`LB || Op==`LBU || Op==`SB || Op==`ORI || Op==`ANDI || Op==`ADDIU || Op==`XORI || Op==`SLTI || Op==`SLTIU
+        Op==`LUI || Op==`LW || Op==`SW || Op==`LH || Op==`LHU || Op==`SH || Op==`LB || Op==`LBU || Op==`SB || Op==`ORI || Op==`ANDI || Op==`ADDIU || Op==`ADDI || Op==`XORI || Op==`SLTI || Op==`SLTIU ||
+        Op==`LWL || Op==`LWR || Op==`SWL || Op==`SWR
         )?1'b1:1'b0;
 
     assign RegDst=R_Type;
@@ -74,12 +76,14 @@ module ControlUnit(
         (R_Type && Funct==`NOR)||(R_Type && Funct==`SLT)||(R_Type && Funct==`SLTU)||
         (R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN)||
         (R_Type && Funct==`MFHI)||(R_Type && Funct==`MFLO)||
-        Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU
+        (R_Type && Funct==`ADD)||(R_Type && Funct==`SUB)||
+        Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU||Op==`ADDI||
+        Op==`LWL||Op==`LWR
         )?1'b1:1'b0;
 
-    assign Extend=(Op==`LW||Op==`SW||Op==`BEQ||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||
+    assign Extend=(Op==`LW||Op==`SW||Op==`BEQ||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||Op==`ADDI||
         Op==`ADDIU||Op==`SLTI||Op==`SLTIU||Op==`BNE||Op==`BGTZ||Op==`BLEZ||(Op==`BGEZ_OP && Rt==`BGEZ_RT)||
-        (Op==`BLTZ_OP && Rt==`BLTZ_RT)||Op==`BEQL||Op==`BNEL
+        (Op==`BLTZ_OP && Rt==`BLTZ_RT)||Op==`BEQL||Op==`BNEL||Op==`LWL||Op==`LWR||Op==`SWL||Op==`SWR
     )?1'b1:1'b0;
 
     assign Jump=(Op==`JAL||Op==`J)?1'b1:1'b0;
@@ -92,20 +96,22 @@ module ControlUnit(
                     (Op==`LHU||Op==`SH)?3'b010:
                     (Op==`LH)?3'b011:
                     (Op==`LBU || Op==`SB)?3'b100:
-                    (Op==`LB)?3'b101:3'bxxx;
+                    (Op==`LB)?3'b101:
+                    (Op==`LWL||Op==`SWL)?3'b110:
+                    (Op==`LWR||Op==`SWR)?3'b111:3'bxxx;
     
     assign JudgeMove = ((R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN))?1'b1:1'b0;
 
     assign Likely = (Op==`BEQL || Op==`BNEL)?1'b1:1'b0;
 
-    assign MulOp = (R_Type && Funct==`MULTU)?2'b00:
-                   (R_Type && Funct==`MULT)?2'b01:
-                   (R_Type && Funct==`DIVU)?2'b10:
-                   (R_Type && Funct==`DIV)?2'b11:
-                   2'bxx;
-    assign MTHILO = (R_Type && Funct==`MTLO)?1'b0:
-                    (R_Type && Funct==`MTHI)?1'b1:
-                    1'bx;
+    assign MulOp = (R_Type && Funct==`MULTU)?3'b000:
+                   (R_Type && Funct==`MULT)?3'b001:
+                   (R_Type && Funct==`DIVU)?3'b010:
+                   (R_Type && Funct==`DIV)?3'b011:
+                   3'b100;
+    assign MTHILO = (R_Type && Funct==`MTLO)?2'b00:
+                    (R_Type && Funct==`MTHI)?2'b01:
+                    2'b10;
     assign MFHILO = (R_Type && Funct==`MFLO)?2'b01:
                     (R_Type && Funct==`MFHI)?2'b10:
                     2'b00;

@@ -4,7 +4,7 @@
 `include "./mux.v"
 `include "./ext.v"
 `timescale 1ns / 1ps
-module DM #(parameter WIDTH = 12)
+module DM #(parameter WIDTH = 14)
 (
     input clk,
     input reset,
@@ -64,7 +64,6 @@ module DM #(parameter WIDTH = 12)
                 end
             else if(we==1)
             begin
-                $display("%d@%h: *%h <= %h", $time, PC, addr_in,wd);
                 case (type)
                     3'b000 :   // Word
                         ram[addr]<=wd;
@@ -95,6 +94,7 @@ module DM #(parameter WIDTH = 12)
                             2'b11: ram[addr]<={wd[`Byte0],ram_b2,ram_h0};
                         endcase
                 endcase
+                $display("%d@%h: *%h <= %h", $time, PC, addr,ram[addr]);
             end
         end
 endmodule // 

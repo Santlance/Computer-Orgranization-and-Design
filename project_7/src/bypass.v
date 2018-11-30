@@ -15,8 +15,8 @@ module BYPASS(
     input MemtoRegE,
     input branchD,
     input LikelyD,
-    input [1:0] MulOpD,
-    input MTHILOD,
+    input [2:0] MulOpD,
+    input [1:0] MTHILOD,
     input [1:0] MFHILOD,
     input Mul_BusyE,
     output [1:0] Forward_A_D,
@@ -24,13 +24,20 @@ module BYPASS(
     output [1:0] Forward_A_E,
     output [1:0] Forward_B_E,
 
+    input ExcOccurM,
+    input ERET,
+    output pc_Exc,
+    output pc_ERET,
+
     output Stall_PC,
     output Stall_IF_ID,
     output Stall_ID_EX,
     output Stall_EX_MEM,
     output Stall_MEM_WB,
     output Flush_IF_ID,
-    output Flush_ID_EX
+    output Flush_ID_EX,
+    output Flush_EX_MEM,
+    output Flush_MEM_WB
 );
 
     // ID forward
@@ -57,14 +64,20 @@ module BYPASS(
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
     // Multiply Stall
-    wire MulOp = (MulOpD!=2'bxx)?1'b1:1'b0;
-    wire MTHILO = (MTHILOD!=1'bx)?1'b1:1'b0;
+    wire MulOp = (MulOpD!=3'b100)?1'b1:1'b0;
+    wire MTHILO = (MTHILOD!=2'b10)?1'b1:1'b0;
     wire MFHILO = (MFHILOD!=2'b00)?1'b1:1'b0;
     wire Stall_Mul = (Mul_BusyE && (MulOp || MTHILO || MFHILO))?1'b1:1'b0;
 
+    // Exception NPC select
+    assign pc_ERET=ERET;
+    assign pc_Exc=ExcOccurM;
+
     assign Stall_PC = (Stall_Mem || Stall_Mul)?1'b1:1'b0;
     assign Stall_IF_ID = (Stall_Mem || Stall_Mul)?1'b1:1'b0;
-    assign Flush_ID_EX = (Stall_Mem || Stall_Mul)?1'b1:1'b0;
-    assign Flush_IF_ID = (LikelyD && ~branchD)?1'b1:1'b0;
+    assign Flush_IF_ID = ((LikelyD && ~branchD)||ExcOccurM||ERET)?1'b1:1'b0;
+    assign Flush_ID_EX = (Stall_Mem || Stall_Mul || ExcOccurM||ERET)?1'b1:1'b0;
+    assign Flush_EX_MEM = (ExcOccurM)?1'b1:1'b0;
+    assign Flush_MEM_WB = (ExcOccurM)?1'b1:1'b0;
 endmodule // BYPASS
 `endif

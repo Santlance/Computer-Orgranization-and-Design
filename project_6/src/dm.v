@@ -64,35 +64,93 @@ module DM #(parameter WIDTH = 12)
                 end
             else if(we==1)
             begin
-                $display("%d@%h: *%h <= %h", $time, PC, addr_in,wd);
                 case (type)
                     3'b000 :   // Word
-                        ram[addr]<=wd;
+                        begin
+                            ram[addr]<=wd;
+                            $display("%d@%h: *%h <= %h", $time, PC, addr,wd);
+                        end
                     3'b010 : // Half
                         case (byte_select)
-                            2'b00: ram[addr]<={ram_h1,wd[`Half0]};
-                            2'b10: ram[addr]<={wd[`Half0],ram_h0};
+                            2'b00: 
+                                begin
+                                    ram[addr]<={ram_h1,wd[`Half0]};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_h1,wd[`Half0]});
+                                end
+                            2'b10: 
+                                begin
+                                    ram[addr]<={wd[`Half0],ram_h0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{wd[`Half0],ram_h0});
+                                end
                         endcase
                     3'b100 : // Byte
                         case (byte_select)
-                            2'b00: ram[addr]<={ram_h1,ram_b1,wd[`Byte0]};
-                            2'b01: ram[addr]<={ram_h1,wd[`Byte0],ram_b0};
-                            2'b10: ram[addr]<={ram_b3,wd[`Byte0],ram_h0};
-                            2'b11: ram[addr]<={wd[`Byte0],ram_b2,ram_h0};
+                            2'b00: 
+                                begin
+                                    ram[addr]<={ram_h1,ram_b1,wd[`Byte0]};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_h1,ram_b1,wd[`Byte0]});
+                                end
+                            2'b01: 
+                                begin
+                                    ram[addr]<={ram_h1,wd[`Byte0],ram_b0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_h1,wd[`Byte0],ram_b0});
+                                end
+                            2'b10: 
+                                begin
+                                    ram[addr]<={ram_b3,wd[`Byte0],ram_h0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_b3,wd[`Byte0],ram_h0});
+                                end
+                            2'b11: 
+                                begin
+                                    ram[addr]<={wd[`Byte0],ram_b2,ram_h0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{wd[`Byte0],ram_b2,ram_h0});
+                                end
                         endcase
                     3'b110 : // WL
                         case (byte_select)
-                            2'b00: ram[addr]<={ram_h1,ram_b1,wd[`Byte3]};
-                            2'b01: ram[addr]<={ram_h1,wd[`Half1]};
-                            2'b10: ram[addr]<={ram_b3,wd[`Half1],wd[`Byte1]};
-                            2'b11: ram[addr]<=wd;
+                            2'b00: 
+                                begin
+                                    ram[addr]<={ram_h1,ram_b1,wd[`Byte3]};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_h1,ram_b1,wd[`Byte3]});
+                                end
+                            2'b01: 
+                                begin
+                                    ram[addr]<={ram_h1,wd[`Half1]};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_h1,wd[`Half1]});
+                                end
+                            2'b10: 
+                                begin
+                                    ram[addr]<={ram_b3,wd[`Half1],wd[`Byte1]};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{ram_b3,wd[`Half1],wd[`Byte1]});
+                                end 
+                            2'b11: 
+                                begin
+                                    ram[addr]<=wd;
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,wd);
+                                end 
                         endcase
                     3'b111 : // WR
                         case (byte_select)
-                            2'b00: ram[addr]<=wd;
-                            2'b01: ram[addr]<={wd[`Byte2],wd[`Half0],ram_b0};
-                            2'b10: ram[addr]<={wd[`Half0],ram_h0};
-                            2'b11: ram[addr]<={wd[`Byte0],ram_b2,ram_h0};
+                            2'b00: 
+                                begin
+                                    ram[addr]<=wd;
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,wd);
+                                end
+                            2'b01: 
+                                begin
+                                    ram[addr]<={wd[`Byte2],wd[`Half0],ram_b0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{wd[`Byte2],wd[`Half0],ram_b0});
+                                end
+                            2'b10: 
+                                begin
+                                    ram[addr]<={wd[`Half0],ram_h0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{wd[`Half0],ram_h0});
+                                end
+                            2'b11: 
+                                begin
+                                    ram[addr]<={wd[`Byte0],ram_b2,ram_h0};
+                                    $display("%d@%h: *%h <= %h", $time, PC, addr,{wd[`Byte0],ram_b2,ram_h0});
+                                end
                         endcase
                 endcase
             end

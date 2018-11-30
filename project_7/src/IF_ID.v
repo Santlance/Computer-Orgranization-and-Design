@@ -13,10 +13,11 @@ module IF_ID(
     input en,
     input [`Word] InstF,
     input [`Word] PC4F,
+    input ExcBDF,
 
     output reg [`Word] InstD,
     output reg [`Word] PC4D,
-
+    output reg ExcBDD,
     input [`Word] PCF,
     output reg [`Word] PCD
 );
@@ -25,6 +26,7 @@ module IF_ID(
         InstD<=0;
         PC4D<=0;
         PCD<=0;
+        ExcBDD<=0;
     end
 
     always @(posedge clk)
@@ -34,6 +36,7 @@ module IF_ID(
                 InstD<=0;
                 PC4D<=0;
                 PCD<=0;
+                ExcBDD<=0;
             end
         else if(en!=1)
             begin
@@ -42,12 +45,14 @@ module IF_ID(
                         InstD<=0;
                         PC4D<=0;
                         PCD<=0;
+                        ExcBDD<=0;
                     end
                 else
                     begin
                         InstD<=InstF;
                         PC4D<=PC4F;
                         PCD<=PCF;
+                        ExcBDD<=ExcBDF;
                     end
             end
         end

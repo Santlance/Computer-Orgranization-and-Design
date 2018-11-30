@@ -16,6 +16,9 @@ module EX_MEM(
     input [`Word] WriteDataE,
     input [2:0] DataTypeE,
     input [`Word] ALUResE,
+    input cpzWriteE,
+    input [4:0] cpzAddrE,
+    input ExcBDE,
 
     output reg [4:0] RegAddrM,
     output reg [`Word] WriteDataM,
@@ -24,7 +27,17 @@ module EX_MEM(
     output reg MemWriteM,
     output reg [2:0] DataTypeM,
     output reg RegWriteM,
+    output reg cpzWriteM,
+    output reg [4:0] cpzAddrM,
+    output reg ExcBDM,
 
+    input ExcOccurE,
+    input [4:0] ExcCodeE,
+    output reg ExcOccurM,
+    output reg [4:0] ExcCodeM,
+
+    input [`Word] PC4E,
+    output reg [`Word] PC4M,
     input [`Word] PCE,
     output reg [`Word] PCM
 );
@@ -37,6 +50,13 @@ module EX_MEM(
         MemWriteM<=0;
         RegWriteM<=0;
         DataTypeM<=0;
+        cpzWriteM<=0;
+        cpzAddrM<=0;
+        ExcBDM<=0;
+        ExcOccurM<=0;
+        ExcCodeM<=0;
+
+        PC4M<=0;
         PCM<=0;
     end
     always @(posedge clk)
@@ -50,6 +70,13 @@ module EX_MEM(
                 MemWriteM<=0;
                 RegWriteM<=0;
                 DataTypeM<=0;
+                cpzWriteM<=0;
+                cpzAddrM<=0;
+                ExcBDM<=0;
+                ExcOccurM<=0;
+                ExcCodeM<=0;
+
+                PC4M<=0;
                 PCM<=0;
             end
         else if(en!=1)
@@ -62,6 +89,13 @@ module EX_MEM(
                     MemWriteM<=0;
                     RegWriteM<=0;
                     DataTypeM<=0;
+                    cpzWriteM<=0;
+                    cpzAddrM<=0;
+                    ExcBDM<=0;
+                    ExcOccurM<=0;
+                    ExcCodeM<=0;
+
+                    PC4M<=0;
                     PCM<=0;
                 end
             else
@@ -73,6 +107,13 @@ module EX_MEM(
                     MemWriteM<=MemWriteE;
                     RegWriteM<=RegWriteE;
                     DataTypeM<=DataTypeE;
+                    cpzWriteM<=cpzWriteE;
+                    cpzAddrM<=cpzAddrE;
+                    ExcBDM<=ExcBDE;
+                    ExcOccurM<=ExcOccurE;
+                    ExcCodeM<=ExcCodeE;
+
+                    PC4M<=PC4E;
                     PCM<=PCE;
                 end
     end

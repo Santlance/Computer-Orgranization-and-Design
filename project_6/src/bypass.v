@@ -15,8 +15,8 @@ module BYPASS(
     input MemtoRegE,
     input branchD,
     input LikelyD,
-    input [1:0] MulOpD,
-    input MTHILOD,
+    input [2:0] MulOpD,
+    input [1:0] MTHILOD,
     input [1:0] MFHILOD,
     input Mul_BusyE,
     output [1:0] Forward_A_D,
@@ -57,8 +57,8 @@ module BYPASS(
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
     // Multiply Stall
-    wire MulOp = (MulOpD!=2'bxx)?1'b1:1'b0;
-    wire MTHILO = (MTHILOD!=1'bx)?1'b1:1'b0;
+    wire MulOp = (MulOpD!=3'b100)?1'b1:1'b0;
+    wire MTHILO = (MTHILOD!=2'b10)?1'b1:1'b0;
     wire MFHILO = (MFHILOD!=2'b00)?1'b1:1'b0;
     wire Stall_Mul = (Mul_BusyE && (MulOp || MTHILO || MFHILO))?1'b1:1'b0;
 

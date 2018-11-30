@@ -15,7 +15,10 @@ module DM #(parameter WIDTH = 12)
     input [`Word] PC,
     output [`Word] rd,
     output [2:0] rd_extend_type,
-    output [1:0] byte_select
+    output [1:0] byte_select,
+
+    output ExcOccur,
+    output [4:0]ExcCode
 );
     localparam RAM_SIZE=2 ** (WIDTH-2);
     reg [31:0] ram[RAM_SIZE-1:0];
@@ -24,7 +27,6 @@ module DM #(parameter WIDTH = 12)
     assign byte_select = addr_in[1:0];
     
     integer i;
-
     initial
     begin
         for(i=0;i<RAM_SIZE-1;i=i+1)
@@ -37,6 +39,13 @@ module DM #(parameter WIDTH = 12)
     assign {ram_h1,ram_h0}=ram[addr];
     assign {ram_b3,ram_b2,ram_b1,ram_b0}=ram[addr];
 
+    // Exception
+    // assign ExcOccur = (
+    //     (type==3'b000 && byte_select!=2'b00)||
+    //     ((type==3'b010 || type==3'b011)&&byte_select[0]!=1'b0)
+    // )?1:0;
+    assign ExcOccur=0;
+    assign ExcCode = ExcOccur?(we?`EXC_ADES:`EXC_ADEL):5'b00000;
     // read
     
     wire wl_out=(byte_select==0)?{ram_b0,24'b0}:
@@ -62,7 +71,7 @@ module DM #(parameter WIDTH = 12)
                     for(i=0;i<RAM_SIZE-1;i=i+1)
                     ram[i]<=0;
                 end
-            else if(we==1)
+            else if(we==1 && ExcOccur!=1)
             begin
                 $display("%d@%h: *%h <= %h", $time, PC, addr_in,wd);
                 case (type)

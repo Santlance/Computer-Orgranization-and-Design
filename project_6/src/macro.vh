@@ -67,11 +67,15 @@
 `define LH      6'b100001   // OpCode
 `define LHU     6'b100101   // OpCode
 `define LW      6'b100011   // OpCode
+`define LWL     6'b100010   // OpCode
+`define LWR     6'b100110   // OpCode
 
 // Save
 `define SB      6'b101000   // OpCode
 `define SH      6'b101001   // OpCode
 `define SW      6'b101011   // OpCode
+`define SWL     6'b101010   // OpCode
+`define SWR     6'b101110   // OpCode
 
 // Branch
 `define BEQ     6'b000100   // OpCode

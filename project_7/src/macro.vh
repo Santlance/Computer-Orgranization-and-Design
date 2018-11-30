@@ -56,10 +56,18 @@
 `define MULTU   6'b011001   // Funct
 `define DIV     6'b011010   // Funct
 `define DIVU    6'b011011   // Funct
-`define MFHI    6'b010000   // FUnct
+`define MFHI    6'b010000   // Funct
 `define MFLO    6'b010010   // Funct
 `define MTHI    6'b010001   // Funct
 `define MTLO    6'b010011   // Funct
+`define BREAK   6'b001101   // Funct
+`define SYSCALL 6'b001100   // Funct
+
+// CP0
+`define COP0    6'b010000   // OpCode
+`define MFC0    5'b00000    // rs
+`define MTC0    5'b00100    // rs
+`define SFC0    11'b0       // Shamt+Funct
 
 // Load
 `define LB      6'b100000   // OpCode
@@ -67,11 +75,15 @@
 `define LH      6'b100001   // OpCode
 `define LHU     6'b100101   // OpCode
 `define LW      6'b100011   // OpCode
+`define LWL     6'b100010   // OpCode
+`define LWR     6'b100110   // OpCode
 
 // Save
 `define SB      6'b101000   // OpCode
 `define SH      6'b101001   // OpCode
 `define SW      6'b101011   // OpCode
+`define SWL     6'b101010   // OpCode
+`define SWR     6'b101110   // OpCode
 
 // Branch
 `define BEQ     6'b000100   // OpCode
@@ -103,6 +115,11 @@
 `define SLTIU   6'b001011   // OpCode
 `define XORI    6'b001110   // OpCode
 
+// ERET
+`define OP_ERET 6'b010000   // OpCode
+`define F_ERET  6'b011000   // Funct
+`define I_ERET  20'h80000   // Inst[25:6]
+
 // ALU operations
 
 `define ALU_ADD 4'b0000     // ADD
@@ -117,7 +134,7 @@
 `define ALU_LUI 4'b1001     // LUI
 `define ALU_LT  4'b1010     // Less than, signed
 `define ALU_LTU 4'b1011     // Less than, unsigned, (0||SrcA)<(0||SrcB)
-
+`define ALU_DUM 4'b1111     // No use
 // Judge operations
 
 `define EQ    4'b0000     // EQ
@@ -137,3 +154,23 @@
 `define FW_NONEE 2'b00
 `define FW_ME    2'b01       // MEM to EXE
 `define FW_WE    2'b10       // WB to EXE
+
+// Exception Code
+`define EXC_INT     5'b00000    // Interrupt
+`define EXC_RI      5'b01010    // Unknown/illegal Instruction
+`define EXC_OV      5'b01100    // Arithmetic
+`define EXC_ADEL    5'b00100    // Address Exception(Load Data or Instruction)
+`define EXC_ADES    5'b00101    // Address Exception(Save Data)
+`define EXC_SYSCALL 5'b01000    // SYSCALL
+`define EXC_BP      5'b01001    // Break
+
+`define EXCEPTION_HANDLER_ADDR 32'h0000_4180
+`define INTERRUPT_HANDLER_ADDR 
+
+// IO
+`define DEV0ADDR
+`define DEV1ADDR
+`define DEV2ADDR
+`define DEV3ADDR
+`define DEV4ADDR
+`define DEV5ADDR

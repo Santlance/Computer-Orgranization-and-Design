@@ -21,10 +21,8 @@
 
 module mips(
     input clk,
-    input reset,
-    output [`Word] fucking
+    input reset
 );
-    assign fucking=PC4D;
     // EX/MEM/WB
     wire clk_re=~clk;
 
@@ -33,7 +31,6 @@ module mips(
     wire [`Word] current_PCF;
     wire [`Word] InstF;
     wire [`Word] PC4F;
-
     // ID
     wire [`Word]        InstD;
     wire [`Word]        PC4D;
@@ -59,14 +56,18 @@ module mips(
          Jump_RD,
          LinkD,
          JudgeMoveD,
-         LikelyD;
+         LikelyD,
+         IgnoreExcRID,
+         ERETD,
+         cpzWriteD,
+         cpztoRegD;
     wire [3:0] ALUCtrlD;
     wire [3:0] JudgeOpD;
     wire [2:0] DataTypeD;
 
-    wire [1:0] MulOpD;
+    wire [2:0] MulOpD;
     wire [1:0] MFHILOD;
-    wire MTHILOD;
+    wire [1:0] MTHILOD;
 
     wire [`Word] RD1D,
                  RD2D,
@@ -81,6 +82,7 @@ module mips(
          branchD;
 
     // EXE
+    wire [`Word] PC4E;
     wire MemtoRegE,
          MemWriteE,
          ALUASrcE,
@@ -90,7 +92,10 @@ module mips(
          ExtendE,
          JumpE,
          Jump_RE,
-         LinkE;
+         LinkE,
+         IgnoreExcRIE,
+         cpzWriteE,
+         cpztoRegE;
     wire [3:0] ALUCtrlE;
     wire [2:0] DataTypeE;
     wire [`Word] RD1E,
@@ -98,14 +103,14 @@ module mips(
     wire [4:0] RsE,
                RtE,
                RdE;
+    wire [4:0] cpzAddrE = RdE;
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
-    wire [1:0] MulOpE;
+    wire [2:0] MulOpE;
     wire [1:0] MFHILOE;
-    wire MTHILOE;
+    wire [1:0] MTHILOE;
     wire Mul_BusyE;
-
     wire [`Word] ALUAE,
                  ALUBE,
                  ALUResE,
@@ -116,17 +121,21 @@ module mips(
     wire [4:0] RegAddrE;
 
     // MEM
+    wire [`Word] PC4M;
     wire MemtoRegM,
          MemWriteM,
-         RegWriteM;
+         RegWriteM,
+         cpzWriteM;
     wire [4:0] RegAddrM;
+    wire [4:0] cpzAddrM;
     wire [`Word] ALUResM;
     wire [`Word] WriteDataM;
     wire [2:0] DataTypeM;
-
+    
     wire [`Word] MemRDM;
     wire [2:0] MemRDSelM;
     wire [1:0] ByteSelM;
+
     // WB
     wire MemtoRegW,
          RegWriteW;
@@ -137,6 +146,7 @@ module mips(
     wire [4:0] RegAddrW;
     wire [2:0] MemRDSelW;
     wire [1:0] ByteSelW;
+
     // Bypass
     wire [1:0] Forward_A_D,
                Forward_B_D,
@@ -151,6 +161,23 @@ module mips(
          Flush_MEM_WB=0;
     wire Flush_IF_ID,
          Flush_ID_EX;
+    wire pc_Exc,pc_ERET;
+
+    // Exception
+    wire ExcBDF,ExcBDD,ExcBDE,ExcBDM;
+    wire ExcOccurF,ExcOccurD,ExcOccurE,ExcOccurM;
+    wire [4:0] ExcCodeF,ExcCodeD,ExcCodeE,ExcCodeM;
+    
+    wire _ExcOccurE,_ExcOccurM;
+    wire ExcOccurCUD,ExcOccurALUE,ExcOccurDMM;
+    wire [4:0] _ExcCodeE,_ExcCodeM;
+    wire [4:0] ExcCodeCUD,ExcCodeALUE,ExcCodeDMM;
+    wire _ExcOccurD=0;
+    wire [4:0] _ExcCodeD=5'b0;
+
+    // CPZ
+    wire [`Word] EPC;
+    wire [`Word] cpzRD;
 
     // test
     wire [`Word] PCF,PCD,PCE,PCM,PCW;
@@ -173,12 +200,16 @@ module mips(
         .Branch(branchD),
         .Jump(JumpD),
         .Jump_r(Jump_RD),
+        .ExcOccur(pc_Exc),
+        .ERET(pc_ERET),
         .PC(current_PCF),
         .B_addr(B_addrD),
         .J_addr(J_addrD),
         .RD(RD1D),
+        .EPC(EPC),
         .PC4(PC4F),
-        .nPC(nPCF)
+        .nPC(nPCF),
+        .ExcBD(ExcBDF)
     );
 
     assign PCF=current_PCF;
@@ -189,9 +220,10 @@ module mips(
         .en(Stall_IF_ID),
         .InstF(InstF),
         .PC4F(PC4F),
-
+        .ExcBDF(ExcBDF),
         .InstD(InstD),
         .PC4D(PC4D),
+        .ExcBDD(ExcBDD),
         .PCF(PCF),
         .PCD(PCD)
     );
@@ -229,7 +261,14 @@ module mips(
         .Likely(LikelyD),
         .MulOp(MulOpD),
         .MTHILO(MTHILOD),
-        .MFHILO(MFHILOD)
+        .MFHILO(MFHILOD),
+        .IgnoreExcRI(IgnoreExcRID),
+        .cpzWrite(cpzWriteD),
+        .cpztoReg(cpztoRegD),
+        .ERET(ERETD),
+
+        .ExcOccur(ExcOccurCUD),
+        .ExcCode(ExcCodeCUD)
     );
 
     wire [`Word] _RD1D,_RD2D;
@@ -284,6 +323,8 @@ module mips(
     );
 
     Branch _branchD(
+        .clk(clk),
+        .reset(reset),
         .Branch(BranchD),
         .JudgeRes(JudgeResD),
         .J_Index(J_IndexD),
@@ -305,6 +346,16 @@ module mips(
         .in(ShamtD),
         .out(Shamt_ExtendD)
     );
+
+    // Exception trans
+
+    Mux2 #(5) _exccodeD_selector(
+        .a0(ExcCodeCUD),
+        .a1(_ExcCodeD),
+        .select(_ExcOccurD),
+        .out(ExcCodeD)
+    );
+    assign ExcOccurD=_ExcOccurD|ExcOccurCUD;
 
     ID_EX _id_ex(
         .clk(clk),
@@ -333,6 +384,9 @@ module mips(
         .MulOpD(MulOpD),
         .MTHILOD(MTHILOD),
         .MFHILOD(MFHILOD),
+        .IgnoreExcRID(IgnoreExcRID),
+        .cpzWriteD(cpzWriteD),
+        .cpztoRegD(cpztoRegD),
 
         .MemtoRegE(MemtoRegE),
         .MemWriteE(MemWriteE),
@@ -356,12 +410,24 @@ module mips(
         .MulOpE(MulOpE),
         .MTHILOE(MTHILOE),
         .MFHILOE(MFHILOE),
+        .IgnoreExcRIE(IgnoreExcRIE),
+        .cpzWriteE(cpzWriteE),
+        .cpztoRegE(cpztoRegE),
 
+        .ExcBDD(ExcBDD),
+        .ExcBDE(ExcBDE),
+        .ExcOccurD(ExcOccurD),
+        .ExcOccurE(_ExcOccurE),
+        .ExcCodeD(ExcCodeD),
+        .ExcCodeE(_ExcCodeE),
+
+        .PC4D(PC4D),
+        .PC4E(PC4E),
         .PCD(PCD),
         .PCE(PCE)
     );
 
-    wire [`Word] _RD1E,_ALUAE;
+    wire [`Word] _RD1E,_ALUAE,__ALUAE;
     Mux4 #(`Word_Size) _ALUAE_forward_selector(
         .a0(RD1E),
         .a1(ALUResM),
@@ -380,6 +446,12 @@ module mips(
         .a0(_ALUAE),
         .a1(PC8E),
         .select(LinkE),
+        .out(__ALUAE)
+    );
+    Mux2 #(`Word_Size) _ALU_srcA_cpz_selector(
+        .a0(__ALUAE),
+        .a1(cpzRD),
+        .select(cpztoRegE),
         .out(ALUAE)
     );
 
@@ -431,7 +503,10 @@ module mips(
         .SrcA(ALUAE),
         .SrcB(ALUBE),
         .ALUCtrl(ALUCtrlE),
-        .ALURes(_ALUResE)
+        .IgnoreExcRI(IgnoreExcRIE),
+        .ALURes(_ALUResE),
+        .ExcOccur(ExcOccurALUE),
+        .ExcCode(ExcCodeALUE)
     );
 
     Mux4 #(32) _mfhilo_selectorE(
@@ -443,6 +518,14 @@ module mips(
         .out(ALUResE)
     );
 
+    // Exception trans
+    Mux2 #(5) _exccodeE_selector(
+        .a0(ExcCodeALUE),
+        .a1(_ExcCodeE),
+        .select(_ExcOccurE),
+        .out(ExcCodeE)
+    );
+    assign ExcOccurE=_ExcOccurE|ExcOccurALUE;
     EX_MEM _ex_mem(
         .clk(clk_re),
         .reset(reset),
@@ -455,6 +538,8 @@ module mips(
         .WriteDataE(_RD2E),
         .DataTypeE(DataTypeE),
         .ALUResE(ALUResE),
+        .cpzWriteE(cpzWriteE),
+        .cpzAddrE(cpzAddrE),
 
         .RegAddrM(RegAddrM),
         .WriteDataM(WriteDataM),
@@ -463,22 +548,45 @@ module mips(
         .MemWriteM(MemWriteM),
         .DataTypeM(DataTypeM),
         .RegWriteM(RegWriteM),
+        .cpzWriteM(cpzWriteM),
+        .cpzAddrM(cpzAddrM),
 
+        .ExcBDE(ExcBDE),
+        .ExcBDM(ExcBDM),
+        .ExcOccurE(ExcOccurE),
+        .ExcOccurM(_ExcOccurM),
+        .ExcCodeE(ExcCodeE),
+        .ExcCodeM(_ExcCodeM),
+
+        .PC4E(PC4E),
+        .PC4M(PC4M),
         .PCE(PCE),
         .PCM(PCM)
     );
 
+    wire DMWE = ~ExcOccurM & MemWriteM;
     DM  _dm(
         .clk(clk_re),
         .reset(reset),
         .we(MemWriteM),
         .type(DataTypeM),
         .addr_in(ALUResM),
-        .wd(WriteDataM),
+        .wd(DMWE),
         .rd(MemRDM),
         .PC(PCM),
         .rd_extend_type(MemRDSelM),
-        .byte_select(ByteSelM)
+        .byte_select(ByteSelM),
+        .ExcOccur(ExcOccurDMM),
+        .ExcCode(ExcCodeDMM)
+    );
+
+    // Exception selector
+    assign ExcOccurM=_ExcOccurM|ExcOccurDMM;
+    Mux2 #(5) _exccodeM_selector(
+        .a0(ExcCodeDMM),
+        .a1(_ExcCodeM),
+        .select(_ExcOccurM),
+        .out(ExcCodeM)
     );
 
     MEM_WB _mem_wb(
@@ -520,6 +628,24 @@ module mips(
         .out(RegDataW)
     );
 
+    wire cpzWE = ~ExcOccurM & cpzWriteM;
+    CPZ _cpz(
+        .clk(clk),
+        .reset(reset),
+        .r_addr(cpzAddrE),
+        .w_addr(cpzAddrM),
+        .we(cpzWE),
+        .wd(WriteDataM),
+        .PC4D(PC4D),
+        .PC4M(PC4M),
+        .ExcOccur(ExcOccurM),
+        .ExcBD(ExcBDM),
+        .ExcCode(ExcCodeM),
+        .ERET(ERETD),
+        .EPC(EPC),
+        .DataOut(cpzRD)
+    );
+
     // Hazard Bypass
     BYPASS _bypass(
         .RsD(RsD),
@@ -542,6 +668,10 @@ module mips(
         .Mul_BusyE(Mul_BusyE),
         .MTHILOD(MTHILOD),
         .MFHILOD(MFHILOD),
+        .ExcOccurM(ExcOccurM),
+        .ERET(ERETD),
+        .pc_Exc(pc_Exc),
+        .pc_ERET(pc_ERET),
         .Stall_PC(Stall_PC),
         .Stall_IF_ID(Stall_IF_ID),
         .Stall_ID_EX(Stall_ID_EX),
