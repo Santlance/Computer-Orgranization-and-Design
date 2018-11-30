@@ -62,7 +62,7 @@ module mips(
     wire [3:0] JudgeOpD;
     wire [2:0] DataTypeD;
 
-    wire [2:0] MulOpD;
+    wire [3:0] MulOpD;
     wire [1:0] MFHILOD;
     wire [1:0] MTHILOD;
 
@@ -99,7 +99,7 @@ module mips(
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
-    wire [2:0] MulOpE;
+    wire [3:0] MulOpE;
     wire [1:0] MFHILOE;
     wire [1:0] MTHILOE;
     wire Mul_BusyE;
@@ -425,7 +425,7 @@ module mips(
         .busy(Mul_BusyE)
     );
 
-    ALU _aluD(
+    ALU _aluE(
         .SrcA(ALUAE),
         .SrcB(ALUBE),
         .ALUCtrl(ALUCtrlE),
