@@ -60,7 +60,7 @@ module mips(
          LikelyD;
     wire [3:0] ALUCtrlD;
     wire [3:0] JudgeOpD;
-    wire [2:0] DataTypeD;
+    wire [3:0] DataTypeD;
 
     wire [3:0] MulOpD;
     wire [1:0] MFHILOD;
@@ -90,7 +90,7 @@ module mips(
          Jump_RE,
          LinkE;
     wire [3:0] ALUCtrlE;
-    wire [2:0] DataTypeE;
+    wire [3:0] DataTypeE;
     wire [`Word] RD1E,
                  RD2E;
     wire [4:0] RsE,
@@ -120,7 +120,7 @@ module mips(
     wire [4:0] RegAddrM;
     wire [`Word] ALUResM;
     wire [`Word] WriteDataM;
-    wire [2:0] DataTypeM;
+    wire [3:0] DataTypeM;
 
     wire [`Word] MemRDM;
     wire [2:0] MemRDSelM;

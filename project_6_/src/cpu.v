@@ -1,3 +1,5 @@
+`ifndef __CPU_V__
+`define __CPU_V__
 `include "./macro.vh"
 `include "./controller.v"
 `include "./alu.v"
@@ -19,9 +21,17 @@
 `include "./multiplier.v"
 `timescale 1ns / 1ps
 
-module mips(
+module cpu(
     input clk,
-    input reset
+    input reset,
+
+    input [`Word] PrRD,
+    input [5:0] HWInt,
+    output [`Word] PrAddr,
+    output [`Word] PrWD,
+    output PrWE,
+    output [3:0] PrDataType,
+    output [`Word] PrPC
 );
     // EX/MEM/WB
     wire clk_re=~clk;
@@ -65,7 +75,7 @@ module mips(
     wire [3:0] JudgeOpD;
     wire [3:0] DataTypeD;
 
-    wire [2:0] MulOpD;
+    wire [3:0] MulOpD;
     wire [1:0] MFHILOD;
     wire [1:0] MTHILOD;
 
@@ -90,7 +100,6 @@ module mips(
          RegWriteE,
          RegDstE,
          ExtendE,
-         JumpE,
          Jump_RE,
          LinkE,
          IgnoreExcRIE,
@@ -107,7 +116,7 @@ module mips(
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
-    wire [2:0] MulOpE;
+    wire [3:0] MulOpE;
     wire [1:0] MFHILOE;
     wire [1:0] MTHILOE;
     wire Mul_BusyE;
@@ -157,23 +166,23 @@ module mips(
     wire Stall_ID_EX=0,
          Stall_EX_MEM=0,
          Stall_MEM_WB=0;
-    wire Flush_EX_MEM=0,
-         Flush_MEM_WB=0;
+    wire Flush_EX_MEM,
+         Flush_MEM_WB;
     wire Flush_IF_ID,
          Flush_ID_EX;
     wire pc_Exc,pc_ERET;
 
     // Exception
+    wire ExcHandle;
+
     wire ExcBDF,ExcBDD,ExcBDE,ExcBDM;
     wire ExcOccurF,ExcOccurD,ExcOccurE,ExcOccurM;
     wire [4:0] ExcCodeF,ExcCodeD,ExcCodeE,ExcCodeM;
     
-    wire _ExcOccurE,_ExcOccurM;
+    wire Before_ExcOccurD,Before_ExcOccurE,Before_ExcOccurM;
     wire ExcOccurCUD,ExcOccurALUE,ExcOccurDMM;
-    wire [4:0] _ExcCodeE,_ExcCodeM;
     wire [4:0] ExcCodeCUD,ExcCodeALUE,ExcCodeDMM;
-    wire _ExcOccurD=0;
-    wire [4:0] _ExcCodeD=5'b0;
+    wire [4:0] Before_ExcCodeD,Before_ExcCodeE,Before_ExcCodeM;
 
     // CPZ
     wire [`Word] EPC;
@@ -187,13 +196,17 @@ module mips(
         .reset(reset),
         .we(Stall_PC),
         .nPC(nPCF),
-        .PC(current_PCF)
+        .PC(current_PCF),
+        .ExcOccur(ExcOccurF),
+        .ExcCode(ExcCodeF)
     );
 
+    wire [`Word] _InstF;
     IM _imF(
         .addr(current_PCF),
-        .Inst(InstF)
+        .Inst(_InstF)
     );
+    assign InstF = (ExcOccurF==1'b1)?32'b0:_InstF;
 
     NPC _npcF(
         .clk(clk),
@@ -212,7 +225,8 @@ module mips(
         .ExcBD(ExcBDF)
     );
 
-    assign PCF=current_PCF;
+    assign PCF = current_PCF;
+
     IF_ID _if_id(
         .clk(clk),
         .reset(reset),
@@ -221,9 +235,14 @@ module mips(
         .InstF(InstF),
         .PC4F(PC4F),
         .ExcBDF(ExcBDF),
+        .ExcOccurF(ExcOccurF),
+        .ExcCodeF(ExcCodeF),
+
         .InstD(InstD),
         .PC4D(PC4D),
         .ExcBDD(ExcBDD),
+        .ExcOccurD(Before_ExcOccurD),
+        .ExcCodeD(Before_ExcCodeD),
         .PCF(PCF),
         .PCD(PCD)
     );
@@ -241,7 +260,7 @@ module mips(
     );
 
     ControlUnit _controlunitD(
-        .inst(InstD),
+        .inst_in(InstD),
 
         .MemtoReg(MemtoRegD),
         .MemWrite(MemWriteD),
@@ -351,11 +370,11 @@ module mips(
 
     Mux2 #(5) _exccodeD_selector(
         .a0(ExcCodeCUD),
-        .a1(_ExcCodeD),
-        .select(_ExcOccurD),
+        .a1(Before_ExcCodeD),
+        .select(Before_ExcOccurD),
         .out(ExcCodeD)
     );
-    assign ExcOccurD=_ExcOccurD|ExcOccurCUD;
+    assign ExcOccurD=Before_ExcOccurD|ExcOccurCUD;
 
     ID_EX _id_ex(
         .clk(clk),
@@ -417,9 +436,9 @@ module mips(
         .ExcBDD(ExcBDD),
         .ExcBDE(ExcBDE),
         .ExcOccurD(ExcOccurD),
-        .ExcOccurE(_ExcOccurE),
+        .ExcOccurE(Before_ExcOccurE),
         .ExcCodeD(ExcCodeD),
-        .ExcCodeE(_ExcCodeE),
+        .ExcCodeE(Before_ExcCodeE),
 
         .PC4D(PC4D),
         .PC4E(PC4E),
@@ -519,13 +538,21 @@ module mips(
     );
 
     // Exception trans
+    wire [4:0] _ExcCodeE_Maybe_Rv;
+    assign _ExcCodeE_Maybe_Rv = ExcOccurALUE?
+                                (MemtoRegE?`EXC_ADEL:
+                                 MemWriteE?`EXC_ADES:
+                                 ExcCodeALUE):
+                                 5'b00000;
+
     Mux2 #(5) _exccodeE_selector(
-        .a0(ExcCodeALUE),
-        .a1(_ExcCodeE),
-        .select(_ExcOccurE),
+        .a0(_ExcCodeE_Maybe_Rv),
+        .a1(Before_ExcCodeE),
+        .select(Before_ExcOccurE),
         .out(ExcCodeE)
     );
-    assign ExcOccurE=_ExcOccurE|ExcOccurALUE;
+    assign ExcOccurE=Before_ExcOccurE|ExcOccurALUE;
+
     EX_MEM _ex_mem(
         .clk(clk_re),
         .reset(reset),
@@ -554,9 +581,9 @@ module mips(
         .ExcBDE(ExcBDE),
         .ExcBDM(ExcBDM),
         .ExcOccurE(ExcOccurE),
-        .ExcOccurM(_ExcOccurM),
+        .ExcOccurM(Before_ExcOccurM),
         .ExcCodeE(ExcCodeE),
-        .ExcCodeM(_ExcCodeM),
+        .ExcCodeM(Before_ExcCodeM),
 
         .PC4E(PC4E),
         .PC4M(PC4M),
@@ -564,28 +591,35 @@ module mips(
         .PCM(PCM)
     );
 
-    wire DMWE = ~ExcOccurM & MemWriteM;
     DM  _dm(
         .clk(clk_re),
         .reset(reset),
         .we(MemWriteM),
         .type(DataTypeM),
         .addr_in(ALUResM),
-        .wd(DMWE),
+        .wd(WriteDataM),
+        .PrRD(PrRD),
         .rd(MemRDM),
         .PC(PCM),
         .rd_extend_type(MemRDSelM),
         .byte_select(ByteSelM),
+        .PrAddr(PrAddr),
+        .PrWD(PrWD),
+        .PrWE(PrWE),
+        .data_type(PrDataType),
+        .Before_ExcOccur(Before_ExcOccurM),
         .ExcOccur(ExcOccurDMM),
-        .ExcCode(ExcCodeDMM)
+        .ExcCode(ExcCodeDMM),
+        
+        .PrPC(PrPC)
     );
 
     // Exception selector
-    assign ExcOccurM=_ExcOccurM|ExcOccurDMM;
+    assign ExcOccurM=Before_ExcOccurM|ExcOccurDMM;
     Mux2 #(5) _exccodeM_selector(
         .a0(ExcCodeDMM),
-        .a1(_ExcCodeM),
-        .select(_ExcOccurM),
+        .a1(Before_ExcCodeM),
+        .select(Before_ExcOccurM),
         .out(ExcCodeM)
     );
 
@@ -641,7 +675,9 @@ module mips(
         .ExcOccur(ExcOccurM),
         .ExcBD(ExcBDM),
         .ExcCode(ExcCodeM),
+        .HWInt(HWInt),
         .ERET(ERETD),
+        .ExcHandle(ExcHandle),
         .EPC(EPC),
         .DataOut(cpzRD)
     );
@@ -668,7 +704,7 @@ module mips(
         .Mul_BusyE(Mul_BusyE),
         .MTHILOD(MTHILOD),
         .MFHILOD(MFHILOD),
-        .ExcOccurM(ExcOccurM),
+        .ExcHandle(ExcHandle),
         .ERET(ERETD),
         .pc_Exc(pc_Exc),
         .pc_ERET(pc_ERET),
@@ -678,6 +714,9 @@ module mips(
         .Stall_EX_MEM(Stall_EX_MEM),
         .Stall_MEM_WB(Stall_MEM_WB),
         .Flush_IF_ID(Flush_IF_ID),
-        .Flush_ID_EX(Flush_ID_EX)
+        .Flush_ID_EX(Flush_ID_EX),
+        .Flush_EX_MEM(Flush_EX_MEM),
+        .Flush_MEM_WB(Flush_MEM_WB)
     );
-endmodule // mips
+endmodule // cpu
+`endif

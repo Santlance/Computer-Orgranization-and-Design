@@ -1,10 +1,9 @@
-`ifndef __DM_V__
-`define __DM_V__
+`ifndef __MEMORY_V__
+`define __MEMORY_V__
 `include "./macro.vh"
 `include "./mux.v"
-`include "./ext.v"
 `timescale 1ns / 1ps
-module DM #(parameter WIDTH = 12)
+module memory #(parameter WIDTH = 12)
 (
     input clk,
     input reset,
@@ -13,18 +12,16 @@ module DM #(parameter WIDTH = 12)
     input [`Word] addr_in,
     input [`Word] wd,
     input [`Word] PC,
-    output [`Word] rd,
-    output [2:0] rd_extend_type,
-    output [1:0] byte_select
+    output [`Word] rd
 );
+
     localparam RAM_SIZE=2 ** (WIDTH-2);
     reg [31:0] ram[RAM_SIZE-1:0];
 
     wire [`Word] addr={addr_in[31:2],2'b0};
-    assign byte_select = addr_in[1:0];
+    wire byte_select = addr_in[1:0];
     
     integer i;
-
     initial
     begin
         for(i=0;i<RAM_SIZE-1;i=i+1)
@@ -50,9 +47,6 @@ module DM #(parameter WIDTH = 12)
     assign rd = (type==4'b0110)?wl_out:
                 (type==4'b0111)?wr_out:
                 ram[addr];
-    assign rd_extend_type=(type==4'b0010)?4'b001:(type==4'b0011)?3'b010:
-                          (type==4'b0100)?4'b011:(type==4'b0101)?3'b100:
-                          3'b000;
 
     // write
     always @(posedge clk)
@@ -155,5 +149,5 @@ module DM #(parameter WIDTH = 12)
                 endcase
             end
         end
-endmodule // 
+endmodule // memory
 `endif

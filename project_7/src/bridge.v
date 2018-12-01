@@ -16,6 +16,8 @@ module Bridge(
     input Dev5Irq,
     output [5:0] HWInt,
 
+    output Dev0WE,
+    output Dev1WE,
 
     input [`Word] Dev0RD,
     input [`Word] Dev1RD,
@@ -24,9 +26,14 @@ module Bridge(
     input [`Word] Dev4RD,
     input [`Word] Dev5RD,
     output [`Word] PrRD
-
 );
-    assign Dev0HIT=(PrAddr>=`Dev0Addr);
-    
+    wire Dev0HIT = (PrAddr>=`DEV0ADDR_BEGIN) && (PrAddr<=`DEV0ADDR_END);
+    wire Dev1HIT = (PrAddr>=`DEV1ADDR_BEGIN) && (PrAddr<=`DEV1ADDR_END);
+    assign Dev0WE = PrWE & Dev0HIT;
+    assign Dev1WE = PrWE & Dev1HIT;
+    assign PrRD = (Dev0HIT)?Dev0RD:
+                  (Dev1HIT)?Dev1RD:
+                  0;
+    assign HWInt = {4'b0,Dev1Irq,Dev0Irq};
 endmodule // Bridge
 `endif

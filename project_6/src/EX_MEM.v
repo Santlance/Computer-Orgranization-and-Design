@@ -14,7 +14,7 @@ module EX_MEM(
     input RegWriteE,
     input [4:0] RegAddrE,
     input [`Word] WriteDataE,
-    input [2:0] DataTypeE,
+    input [3:0] DataTypeE,
     input [`Word] ALUResE,
 
     output reg [4:0] RegAddrM,
@@ -22,7 +22,7 @@ module EX_MEM(
     output reg [`Word] ALUResM,
     output reg MemtoRegM,
     output reg MemWriteM,
-    output reg [2:0] DataTypeM,
+    output reg [3:0] DataTypeM,
     output reg RegWriteM,
 
     input [`Word] PCE,

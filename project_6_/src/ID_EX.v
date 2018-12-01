@@ -34,6 +34,11 @@ module ID_EX(
     input [3:0] MulOpD,
     input [1:0] MTHILOD,
     input [1:0] MFHILOD,
+    input IgnoreExcRID,
+    input cpzWriteD,
+    input cpztoRegD,
+    input ExcBDD,
+
     output reg MemtoRegE,
     output reg MemWriteE,
     output reg [3:0] ALUCtrlE,
@@ -56,7 +61,18 @@ module ID_EX(
     output reg [3:0] MulOpE,
     output reg [1:0] MTHILOE,
     output reg [1:0] MFHILOE,
+    output reg IgnoreExcRIE,
+    output reg cpzWriteE,
+    output reg cpztoRegE,
+    output reg ExcBDE,
 
+    input ExcOccurD,
+    input [4:0] ExcCodeD,
+    output reg ExcOccurE,
+    output reg [4:0] ExcCodeE,
+
+    input [`Word] PC4D,
+    output reg [`Word] PC4E,
     input [`Word] PCD,
     output reg [`Word] PCE              // for test
 );
@@ -81,10 +97,18 @@ module ID_EX(
         Imm_ExtendE<=0;
         Shamt_ExtendE<=0;
         PC8E<=0;
-        PCE<=0;
         MulOpE<=0;
         MTHILOE<=0;
         MFHILOE<=0;
+        IgnoreExcRIE<=0;
+        cpzWriteE<=0;
+        cpztoRegE<=0;
+        ExcBDE<=0;
+        ExcOccurE<=0;
+        ExcCodeE<=0;
+
+        PC4E<=0;
+        PCE<=0;
     end
     always @(posedge clk)
         if(reset)
@@ -108,10 +132,18 @@ module ID_EX(
                 Imm_ExtendE<=0;
                 Shamt_ExtendE<=0;
                 PC8E<=0;
-                PCE<=0;
                 MulOpE<=0;
                 MTHILOE<=0;
                 MFHILOE<=0;
+                IgnoreExcRIE<=0;
+                cpzWriteE<=0;
+                cpztoRegE<=0;
+                ExcBDE<=0;
+                ExcOccurE<=0;
+                ExcCodeE<=0;
+
+                PC4E<=0;
+                PCE<=0;
             end
         else if(en!=1)
             if(clr)
@@ -135,10 +167,18 @@ module ID_EX(
                     Imm_ExtendE<=0;
                     Shamt_ExtendE<=0;
                     PC8E<=0;
-                    PCE<=0;
                     MulOpE<=0;
                     MTHILOE<=0;
                     MFHILOE<=0;
+                    IgnoreExcRIE<=0;
+                    cpzWriteE<=0;
+                    cpztoRegE<=0;
+                    ExcBDE<=0;
+                    ExcOccurE<=0;
+                    ExcCodeE<=0;
+
+                    PC4E<=0;
+                    PCE<=0;
                 end
             else
                 begin
@@ -161,10 +201,18 @@ module ID_EX(
                     Imm_ExtendE<=Imm_ExtendD;
                     Shamt_ExtendE<=Shamt_ExtendD;
                     PC8E<=PC8D;
-                    PCE<=PCD;
                     MulOpE<=MulOpD;
                     MTHILOE<=MTHILOD;
                     MFHILOE<=MFHILOD;
+                    IgnoreExcRIE<=IgnoreExcRID;
+                    cpzWriteE<=cpzWriteD;
+                    cpztoRegE<=cpztoRegD;
+                    ExcBDE<=ExcBDD;
+                    ExcOccurE<=ExcOccurD;
+                    ExcCodeE<=ExcCodeD;
+
+                    PC4E<=PC4D;
+                    PCE<=PCD;
                 end
 endmodule //ID_EX
 `endif

@@ -155,7 +155,6 @@
 `define MUL_MSUB  4'b0111   // MSUB
 
 // Forward
-
 `define FW_NONED 2'b00       // No forward
 `define FW_MD    2'b01       // MEM to ID
 `define FW_WD    2'b10       // WB to ID

@@ -17,7 +17,7 @@ module ControlUnit(
     output Jump,
     output Jump_R,
     output Link,
-    output [2:0] DataType,
+    output [3:0] DataType,
     output JudgeMove,
     output Likely,
     output [3:0] MulOp,
@@ -98,13 +98,13 @@ module ControlUnit(
 
     assign Link=(Op==`JAL||(R_Type && Funct==`JALR))||(Op==`REGIMM && (Funct==`BGEZAL||Funct==`BLTZAL))?1'b1:1'b0;
 
-    assign DataType=(Op==`LW || Op==`SW)?3'b000:
-                    (Op==`LHU||Op==`SH)?3'b010:
-                    (Op==`LH)?3'b011:
-                    (Op==`LBU || Op==`SB)?3'b100:
-                    (Op==`LB)?3'b101:
-                    (Op==`LWL||Op==`SWL)?3'b110:
-                    (Op==`LWR||Op==`SWR)?3'b111:3'bxxx;
+    assign DataType=(Op==`LW || Op==`SW)?4'b0000:
+                    (Op==`LHU||Op==`SH)?4'b0010:
+                    (Op==`LH)?4'b0011:
+                    (Op==`LBU || Op==`SB)?4'b0100:
+                    (Op==`LB)?4'b0101:
+                    (Op==`LWL||Op==`SWL)?4'b0110:
+                    (Op==`LWR||Op==`SWR)?4'b0111:4'b1111;
     
     assign JudgeMove = ((R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN))?1'b1:1'b0;
 
@@ -119,6 +119,7 @@ module ControlUnit(
                    (Op==`SPE2 && Funct==`MSUBU)?`MUL_MSUBU:
                    (Op==`SPE2 && Funct==`MSUB)?`MUL_MSUB:
                    4'b1000;
+                   
     assign MTHILO = (R_Type && Funct==`MTLO)?2'b00:
                     (R_Type && Funct==`MTHI)?2'b01:
                     2'b10;
