@@ -94,16 +94,20 @@
 `define BNEL    6'b010101   // OpCode
 
 // Special-Branch
-`define BGEZ_OP 6'b000001   // OpCode
-`define BGEZ_RT 5'b00001    // BGEZ
-`define BLTZ_OP 6'b000001   // OpCode
-`define BLTZ_RT 5'b00000    // BLTZ
+`define REGIMM  6'b000001   // OpCode
+`define BGEZ    5'b00001    // BGEZ
+`define BLTZ    5'b00000    // BLTZ
+`define BGEZAL  5'b10001    // BGEZAL
+`define BLTZAL  5'b10000    // BLTZAL
 
 // J_Type
 `define J       6'b000010   // OpCode
 `define JAL     6'b000011   // OpCode
 `define JALR    6'b001001   // Funct
 `define JR      6'b001000   // Funct
+
+// Special2
+`define SPE2    6'b011100   // OpCode
 
 // I_Type
 `define ADDI    6'b001000   // OpCode
@@ -114,6 +118,12 @@
 `define SLTI    6'b001010   // OpCode
 `define SLTIU   6'b001011   // OpCode
 `define XORI    6'b001110   // OpCode
+`define CLO     6'b100001   // Funct
+`define CLZ     6'b100000   // Funct
+`define MADD    6'b000000   // Funct
+`define MADDU   6'b000001   // Funct
+`define MSUB    6'b000100   // Funct
+`define MSUBU   6'b000101   // Funct
 
 // ERET
 `define OP_ERET 6'b010000   // OpCode
@@ -134,7 +144,9 @@
 `define ALU_LUI 4'b1001     // LUI
 `define ALU_LT  4'b1010     // Less than, signed
 `define ALU_LTU 4'b1011     // Less than, unsigned, (0||SrcA)<(0||SrcB)
-`define ALU_DUM 4'b1111     // No use
+`define ALU_CLO 4'b1100     // Count leading ones
+`define ALU_CLZ 4'b1101     // Count Leading zeros
+
 // Judge operations
 
 `define EQ    4'b0000     // EQ
@@ -144,12 +156,21 @@
 `define GEZ   4'b0100     // GEZ
 `define LTZ   4'b0101     // LTZ
 
-// Forward
+// Multiplier operations
+`define MUL_MULTU 4'b0000   // MULTU
+`define MUL_MULT  4'b0001   // MULT
+`define MUL_DIVU  4'b0010   // DIVU
+`define MUL_DIV   4'b0011   // DIV
+`define MUL_MADDU 4'b0100   // MADDU
+`define MUL_MADD  4'b0101   // MADD
+`define MUL_MSUBU 4'b0110   // MSUBU
+`define MUL_MSUB  4'b0111   // MSUB
 
+
+// Forward
 `define FW_NONED 2'b00       // No forward
 `define FW_MD    2'b01       // MEM to ID
 `define FW_WD    2'b10       // WB to ID
-
 
 `define FW_NONEE 2'b00
 `define FW_ME    2'b01       // MEM to EXE
@@ -167,7 +188,7 @@
 `define DATAADDR_BEGIN 32'h0000_0000
 `define DATAADDR_END   32'h0000_2FFF
 `define TEXTADDR_BEGIN 32'h0000_3000
-`define TEXTADDR_END   32'h0000_4FFF
+`define TEXTADDR_END   32'h0000_4FFC
 
 `define EXCEPTION_HANDLER_ADDR 32'h0000_4180
 `define INTERRUPT_HANDLER_ADDR 

@@ -7,13 +7,12 @@ module IM(
     input [`Word] addr,
     output [`Word] Inst
 );
-    reg [`Word] im_16k[2047:0];
-    wire [`Word] _addr=addr-'h0000_3000;
+    reg [`Word] im_16k[4095:0];
     initial
         begin
             $readmemh("code.txt",im_16k);
             $readmemh("code_handler.txt",im_16k,1120,2047);
         end
-    assign Inst=im_16k[_addr[13:2]];      // 1024
+    assign Inst=im_16k[addr[31:2]-32'h0000_0C00];      // 1024
 endmodule // IM
 `endif

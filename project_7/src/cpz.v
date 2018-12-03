@@ -19,6 +19,7 @@ module CPZ(
     input ERET,
     input [5:0] HWInt,
 
+    output ExcHandle,
     output reg [`Word] EPC,
     output [`Word] DataOut
 );
@@ -47,7 +48,7 @@ module CPZ(
     // EPC begin
     // EPC end
 
-    wire ExcHandle = SR[0] && ~SR[1] && ( ( | ExcCode) || ( | (HWInt & SR[15:10])));
+    assign ExcHandle = SR[0] && ~SR[1] && ( ( | ExcCode) || ( | (HWInt & SR[15:10])));
 
     assign DataOut = (r_addr==12)?SR:
                      (r_addr==13)?Cause:
@@ -64,7 +65,6 @@ module CPZ(
 
     always @(posedge clk)
     begin
-        $display("%h", PC4D);
         if(reset)
             begin
                 SR<=SR_INIT;
@@ -83,14 +83,11 @@ module CPZ(
                 Cause[6:2]<=ExcCode;
                 Cause[31]<=ExcBD;
                 Cause[15:10]<=HWInt;
-                
-                $display("occur %h",Cause);
             end
         else if(ERET==1'b1)
             SR[1]<=0;
         else if(we)
             begin
-            $display("%h %h",w_addr,wd);
             case (w_addr)
                 12: SR<=wd;
                 13: Cause<=wd;

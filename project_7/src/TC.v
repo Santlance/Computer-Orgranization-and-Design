@@ -7,18 +7,15 @@ module TC #(parameter base=`DEV0ADDR_BEGIN)
 (
     input clk,
     input reset,
-    input [`Word] addr,
+    input [`Word] Addr,
     input we,
-    input [3:0] be,
     input [`Word] wd,
     output [`Word] RD,
-    output IRQ,
-
-    input [`Word] PC
+    output IRQ
 );
     reg [`Word] ctrl,preset,count;
 
-    wire [3:0] reg_select = addr-base;
+    wire [3:0] reg_select = Addr-base;
 
     // -------- ctrl寄存器定义
     // ctrl[31:4] reserved
@@ -54,28 +51,10 @@ module TC #(parameter base=`DEV0ADDR_BEGIN)
         else
         begin
             if(we==1'b1)
-                begin
-                    case (reg_select)
-                        4'h0:
-                            begin
-                                if(be[3]) ctrl[`Byte3]=wd[`Byte3];
-                                if(be[2]) ctrl[`Byte3]=wd[`Byte2];
-                                if(be[1]) ctrl[`Byte3]=wd[`Byte1];
-                                if(be[0]) ctrl[`Byte3]=wd[`Byte0];
-                                $display("%d@%h: *%h <= %h", $time, PC, addr,ctrl);
-                            end
-                        4'h4:
-                            begin
-                                if(be[3]) preset[`Byte3]=wd[`Byte3];
-                                if(be[2]) preset[`Byte3]=wd[`Byte2];
-                                if(be[1]) preset[`Byte3]=wd[`Byte1];
-                                if(be[0]) preset[`Byte3]=wd[`Byte0];
-                                $display("%d@%h: *%h <= %h", $time, PC, addr,preset);
-                            end
-                    endcase
-                    
-                end
-                
+                case (reg_select)
+                    4'h0: ctrl<=wd;
+                    4'h4: preset<=wd;
+                endcase
             else if(count==32'b1 && CountEn==1'b1 && Mode==2'b00)
                 ctrl<={ctrl[31:0],1'b0};
 

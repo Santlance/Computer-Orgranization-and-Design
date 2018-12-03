@@ -56,7 +56,7 @@
 `define MULTU   6'b011001   // Funct
 `define DIV     6'b011010   // Funct
 `define DIVU    6'b011011   // Funct
-`define MFHI    6'b010000   // FUnct
+`define MFHI    6'b010000   // Funct
 `define MFLO    6'b010010   // Funct
 `define MTHI    6'b010001   // Funct
 `define MTLO    6'b010011   // Funct
@@ -91,7 +91,6 @@
 `define BLTZ    5'b00000    // BLTZ
 `define BGEZAL  5'b10001    // BGEZAL
 `define BLTZAL  5'b10000    // BLTZAL
-
 
 // J_Type
 `define J       6'b000010   // OpCode

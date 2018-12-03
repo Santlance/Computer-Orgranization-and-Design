@@ -79,7 +79,7 @@ module ControlUnit(
     assign ALUASrc=((R_Type && Funct==`SLL)||(R_Type && Funct==`SRA)||(R_Type && Funct==`SRL))?1'b1:1'b0;
 
     assign ALUSrc=(
-        Op==`LUI || Op==`LW || Op==`SW || Op==`LH || Op==`LHU || Op==`SH || Op==`LB || Op==`LBU || Op==`SB || Op==`ORI || Op==`ANDI || Op==`ADDIU || Op==`XORI || Op==`SLTI || Op==`SLTIU ||
+        Op==`LUI || Op==`LW || Op==`SW || Op==`LH || Op==`LHU || Op==`SH || Op==`LB || Op==`LBU || Op==`SB || Op==`ORI || Op==`ANDI || Op==`ADDIU || Op==`XORI || Op==`SLTI || Op==`SLTIU || Op==`ADDI ||
         Op==`LWL||Op==`LWR||Op==`SWL||Op==`SWR
         )?1'b1:1'b0;
 
@@ -94,7 +94,7 @@ module ControlUnit(
         (R_Type && Funct==`MOVZ)||(R_Type && Funct==`MOVN)||
         (R_Type && Funct==`MFHI)||(R_Type && Funct==`MFLO)||
         (R_Type && Funct==`ADD)||(R_Type && Funct==`SUB)||
-        Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU||
+        Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU||Op==`ADDI||
         Op==`LWL||Op==`LWR||cpztoReg||(Op==`SPE2 && Funct==`CLO)||(Op==`SPE2 && Funct==`CLZ)
         )?1'b1:1'b0;
 

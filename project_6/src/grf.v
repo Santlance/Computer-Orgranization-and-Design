@@ -24,14 +24,14 @@ module GRF(
     initial
         begin
             for(i=0;i<32;i=i+1)
-            grf[i]<=0;
+                grf[i]<=0;
         end
     always @(posedge clk) 
         begin
             if(reset)
                 begin
                     for(i=0;i<32;i=i+1)
-                    grf[i]<=0;
+                        grf[i]<=0;
                 end
             else if(we==1 && A3!=0)
                 begin

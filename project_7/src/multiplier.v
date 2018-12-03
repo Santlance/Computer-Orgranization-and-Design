@@ -9,7 +9,7 @@ module Multiplier(
     input [1:0] MTHILO,
     input [`Word] SrcA,
     input [`Word] SrcB,
-    input [2:0] MulOp,
+    input [3:0] MulOp,
     output reg [`Word] HI,
     output reg [`Word] LO,
     output busy
@@ -23,40 +23,72 @@ module Multiplier(
         counter<=0;
     end
 
+    reg [`Word] temp_hi,temp_lo;
+
     always @(posedge clk)
     begin
         if(reset)
             begin
+                temp_hi<=0;
+                temp_lo<=0;
                 HI<=0;
                 LO<=0;
                 counter<=0;
             end
         else if(counter>0)
-            counter<=counter-4'b1;
+            begin
+                if(counter==4'b1)
+                    begin
+                        HI<=temp_hi;
+                        LO<=temp_lo;      
+                    end
+                counter<=counter-4'b1;
+            end
         else
             begin
+                
                 case (MulOp)
-                    3'b000:  // unsigned mult
+                    4'b0000:  // unsigned mult
                         begin
                             counter<=5;
-                            {HI,LO}<={1'b0,SrcA}*{1'b0,SrcB};
+                            {temp_hi,temp_lo}<={1'b0,SrcA}*{1'b0,SrcB};
                         end
-                    3'b001:
+                    4'b0001: // mult
                         begin
                             counter<=5;
-                            {HI,LO}<=$signed(SrcA)*$signed(SrcB);
+                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB);
                         end
-                    3'b010:
+                    4'b0010: // unsigned div
                         begin
                             counter<=10;
-                            HI<={1'b0,SrcA}%{1'b0,SrcB};
-                            LO<={1'b0,SrcA}/{1'b0,SrcB};
+                            temp_hi<={1'b0,SrcA}%{1'b0,SrcB};
+                            temp_lo<={1'b0,SrcA}/{1'b0,SrcB};
                         end
-                    3'b011:
+                    4'b0011: // div
                         begin
                             counter<=10;
-                            HI<=$signed(SrcA)%$signed(SrcB);
-                            LO<=$signed(SrcA)/$signed(SrcB);
+                            temp_hi<=$signed(SrcA)%$signed(SrcB);
+                            temp_lo<=$signed(SrcA)/$signed(SrcB);
+                        end
+                    4'b0100: // maddu
+                        begin
+                            counter<=5;
+                            {temp_hi,temp_lo}<={1'b0,SrcA}*{1'b0,SrcB}+{HI,LO};
+                        end
+                    4'b0101: // madd
+                        begin
+                            counter<=5;
+                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB)+{HI,LO};
+                        end
+                    4'b0110: // msubu
+                        begin
+                            counter<=5;
+                            {temp_hi,temp_lo}<={1'b0,SrcA}*{1'b0,SrcB}-{HI,LO};
+                        end
+                    4'b0111: // msub
+                        begin
+                            counter<=5;
+                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB)-{HI,LO};
                         end
                 endcase
 
