@@ -15,10 +15,12 @@ module BYPASS(
     input MemtoRegE,
     input branchD,
     input LikelyD,
-    input [3:0] MulOpD,
+    input [3:0] MDUOpD,
     input [1:0] MTHILOD,
     input [1:0] MFHILOD,
-    input Mul_BusyE,
+    input MDUBusyE,
+    input MDU_ResultE,
+    input [1:0] MDU_Result_Stall,
     output [1:0] Forward_A_D,
     output [1:0] Forward_B_D,
     output [1:0] Forward_A_E,
@@ -30,7 +32,8 @@ module BYPASS(
     output Stall_EX_MEM,
     output Stall_MEM_WB,
     output Flush_IF_ID,
-    output Flush_ID_EX
+    output Flush_ID_EX,
+    output Flush_EX_MEM
 );
 
     // ID forward
@@ -57,14 +60,17 @@ module BYPASS(
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
     // Multiply Stall
-    wire MulOp = (MulOpD!=4'b1000)?1'b1:1'b0;
+    wire MDUOp = (MDUOpD!=4'b1000)?1'b1:1'b0;
     wire MTHILO = (MTHILOD!=2'b10)?1'b1:1'b0;
     wire MFHILO = (MFHILOD!=2'b00)?1'b1:1'b0;
-    wire Stall_Mul = (Mul_BusyE && (MulOp || MTHILO || MFHILO))?1'b1:1'b0;
+    wire Stall_MDU = (MDUBusyE && (MDUOp || MTHILO || MFHILO))?1'b1:1'b0;
+    wire Stall_MDU_Result = (MDU_ResultE && ~MDU_Result_Stall[1])?1'b1:1'b0;
 
-    assign Stall_PC = (Stall_Mem || Stall_Mul)?1'b1:1'b0;
-    assign Stall_IF_ID = (Stall_Mem || Stall_Mul)?1'b1:1'b0;
-    assign Flush_ID_EX = (Stall_Mem || Stall_Mul)?1'b1:1'b0;
+    assign Stall_PC = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
+    assign Stall_IF_ID = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
+    assign Stall_ID_EX = (Stall_MDU_Result)?1'b1:1'b0;
+    assign Flush_ID_EX = (Stall_Mem || Stall_MDU)?1'b1:1'b0;
     assign Flush_IF_ID = (LikelyD && ~branchD)?1'b1:1'b0;
+    assign Flush_EX_MEM = (MDU_ResultE && ~MDU_Result_Stall[0])?1'b1:1'b0;
 endmodule // BYPASS
 `endif

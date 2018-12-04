@@ -7,15 +7,13 @@ module CPZ(
     input clk,
     input reset,
 
-    input [4:0] r_addr,
-    input [4:0] w_addr,
+    input [4:0] addr,
     input we,
     input [`Word] wd,
-    input [`Word] PC4D,
     input [`Word] PC4M,
     input ExcOccur,
     input ExcBD,
-    input [4:0] ExcCode,
+    input [4:0] ExcCodeM,
     input ERET,
     input [5:0] HWInt,
 
@@ -27,7 +25,7 @@ module CPZ(
 
     reg [`Word] SR,                         // 12
                 Cause,                      // 13
-                // EPC,                     // 14
+                //EPC,                      // 14
                 PRId;                       // 15
 
     // SR begin
@@ -35,7 +33,6 @@ module CPZ(
     wire StatusEXL = SR[1];                 // Exception Level. 1: prohibit, 2: permit
     wire [5:0] StatusIM = SR[15:10];
     wire [7:0] StatusIM_ALL = SR[15:8];     // Interrupt Mask, [1:0] internal written by software, [7:2] external. 1: permit, 2: prohibit
-
     // SR end
 
     // Cause begin
@@ -47,13 +44,14 @@ module CPZ(
 
     // EPC begin
     // EPC end
+    wire [4:0] ExcCode = (|(HWInt & StatusIM))?5'b0:ExcCodeM;
 
-    assign ExcHandle = SR[0] && ~SR[1] && ( ( | ExcCode) || ( | (HWInt & SR[15:10])));
+    assign ExcHandle = StatusIE && ~StatusEXL && ( ( | ExcCodeM) || ( | (HWInt & StatusIM)));
 
-    assign DataOut = (r_addr==12)?SR:
-                     (r_addr==13)?Cause:
-                     (r_addr==14)?EPC:
-                     (r_addr==15)?PRId:
+    assign DataOut = (addr==12)?SR:
+                     (addr==13)?Cause:
+                     (addr==14)?EPC:
+                     (addr==15)?PRId:
                      0;
 
     initial
@@ -61,6 +59,7 @@ module CPZ(
         SR<=SR_INIT;
         Cause<=0;
         EPC<=0;
+        PRId<=114514;
     end
 
     always @(posedge clk)
@@ -70,13 +69,11 @@ module CPZ(
                 SR<=SR_INIT;
                 Cause<=0;
                 EPC<=0;
-                // PRId<=0;
+                PRId<=114514;
             end
         else if(ExcHandle)
             begin
-                if(ExcCode==`EXC_SYSCALL || ExcCode==`EXC_BP)
-                    EPC<=PC4D-4;
-                else if(ExcBD==1'b1)
+                if(ExcBD==1'b1)
                     EPC<=PC4M-8;
                 else EPC<=PC4M-4;
                 SR[1]<=1;
@@ -87,14 +84,12 @@ module CPZ(
         else if(ERET==1'b1)
             SR[1]<=0;
         else if(we)
-            begin
-            case (w_addr)
+            case (addr)
                 12: SR<=wd;
                 13: Cause<=wd;
                 14: EPC<=wd;
                 15: PRId<=wd;
             endcase
-            end
     end
 endmodule // CPZ
 `endif

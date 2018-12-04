@@ -20,9 +20,10 @@ module ControlUnit(
     output [3:0] DataType,
     output JudgeMove,
     output Likely,
-    output [3:0] MulOp,
+    output [3:0] MDUOp,
     output [1:0] MTHILO,
-    output [1:0] MFHILO
+    output [1:0] MFHILO,
+    output MDU_Result
 );
     wire [5:0] Op=inst[`Inst_OP];
     wire [4:0] Rt=inst[`Inst_RT];
@@ -72,7 +73,7 @@ module ControlUnit(
         Op==`LWL || Op==`LWR || Op==`SWL || Op==`SWR
         )?1'b1:1'b0;
 
-    assign RegDst=R_Type || (Op==`SPE2 && Funct==`CLO) || (Op==`SPE2 && Funct==`CLZ);
+    assign RegDst=R_Type || (Op==`SPE2 && Funct==`CLO) || (Op==`SPE2 && Funct==`CLZ) || (Op==`SPE2 && Funct==`MUL);
 
     assign RegWrite=(
         (R_Type && Funct==`ADDU)||(R_Type && Funct==`SLL)||(R_Type && Funct==`SLLV)||
@@ -84,7 +85,7 @@ module ControlUnit(
         (R_Type && Funct==`MFHI)||(R_Type && Funct==`MFLO)||
         (R_Type && Funct==`ADD)||(R_Type && Funct==`SUB)||
         Op==`LW||Op==`JAL||Op==`LUI||Op==`ANDI||Op==`ORI||Op==`LH||Op==`LHU||Op==`LB||Op==`LBU||Op==`ADDIU||Op==`XORI||Op==`SLTI||Op==`SLTIU||Op==`ADDI||
-        Op==`LWL||Op==`LWR||(Op==`SPE2 && Funct==`CLO)||(Op==`SPE2 && Funct==`CLZ)
+        Op==`LWL||Op==`LWR||(Op==`SPE2 && Funct==`CLO)||(Op==`SPE2 && Funct==`CLZ)||(Op==`SPE2 && Funct==`MUL)
         )?1'b1:1'b0;
 
     assign Extend=(Op==`LW||Op==`SW||Op==`BEQ||Op==`LH||Op==`LHU||Op==`SH||Op==`LB||Op==`LBU||Op==`SB||Op==`ADDI||
@@ -110,21 +111,22 @@ module ControlUnit(
 
     assign Likely = (Op==`BEQL || Op==`BNEL)?1'b1:1'b0;
 
-    assign MulOp = (R_Type && Funct==`MULTU)?`MUL_MULTU:
-                   (R_Type && Funct==`MULT)?`MUL_MULT:
-                   (R_Type && Funct==`DIVU)?`MUL_DIVU:
-                   (R_Type && Funct==`DIV)?`MUL_DIV:
-                   (Op==`SPE2 && Funct==`MADDU)?`MUL_MADDU:
-                   (Op==`SPE2 && Funct==`MADD)?`MUL_MADD:
-                   (Op==`SPE2 && Funct==`MSUBU)?`MUL_MSUBU:
-                   (Op==`SPE2 && Funct==`MSUB)?`MUL_MSUB:
-                   4'b1000;
+    assign MDUOp = (R_Type && Funct==`MULTU)?`MDU_MULTU:
+                   ((R_Type && Funct==`MULT)||(Op==`SPE2 && Funct==`MUL))?`MDU_MULT:
+                   (R_Type && Funct==`DIVU)?`MDU_DIVU:
+                   (R_Type && Funct==`DIV)?`MDU_DIV:
+                   (Op==`SPE2 && Funct==`MADDU)?`MDU_MADDU:
+                   (Op==`SPE2 && Funct==`MADD)?`MDU_MADD:
+                   (Op==`SPE2 && Funct==`MSUBU)?`MDU_MSUBU:
+                   (Op==`SPE2 && Funct==`MSUB)?`MDU_MSUB:
+                   `MDU_DUM;
                    
-    assign MTHILO = (R_Type && Funct==`MTLO)?2'b00:
-                    (R_Type && Funct==`MTHI)?2'b01:
-                    2'b10;
-    assign MFHILO = (R_Type && Funct==`MFLO)?2'b01:
+    assign MTHILO = (R_Type && Funct==`MTLO)?2'b01:
+                    (R_Type && Funct==`MTHI)?2'b11:
+                    2'b00;
+    assign MFHILO = ((R_Type && Funct==`MFLO) ||(Op==`SPE2 && Funct==`MUL))?2'b01:
                     (R_Type && Funct==`MFHI)?2'b10:
                     2'b00;
+    assign MDU_Result = (Op==`SPE2 && Funct==`MUL)?1'b1:1'b0;
 endmodule // ControlUnit
 `endif

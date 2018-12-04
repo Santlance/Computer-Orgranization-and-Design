@@ -31,9 +31,10 @@ module ID_EX(
     input [`Word] Imm_ExtendD,
     input [`Word] Shamt_ExtendD,
     input [`Word] PC8D,
-    input [3:0] MulOpD,
+    input [3:0] MDUOpD,
     input [1:0] MTHILOD,
     input [1:0] MFHILOD,
+    input MDU_ResultD,
     output reg MemtoRegE,
     output reg MemWriteE,
     output reg [3:0] ALUCtrlE,
@@ -53,9 +54,10 @@ module ID_EX(
     output reg [`Word] Imm_ExtendE,
     output reg [`Word] Shamt_ExtendE,
     output reg [`Word] PC8E,
-    output reg [3:0] MulOpE,
+    output reg [3:0] MDUOpE,
     output reg [1:0] MTHILOE,
     output reg [1:0] MFHILOE,
+    output reg MDU_ResultE,
 
     input [`Word] PCD,
     output reg [`Word] PCE              // for test
@@ -82,9 +84,10 @@ module ID_EX(
         Shamt_ExtendE<=0;
         PC8E<=0;
         PCE<=0;
-        MulOpE<=0;
+        MDUOpE<=`MDU_DUM;
         MTHILOE<=0;
         MFHILOE<=0;
+        MDU_ResultE<=0;
     end
     always @(posedge clk)
         if(reset)
@@ -109,9 +112,10 @@ module ID_EX(
                 Shamt_ExtendE<=0;
                 PC8E<=0;
                 PCE<=0;
-                MulOpE<=0;
+                MDUOpE<=`MDU_DUM;
                 MTHILOE<=0;
                 MFHILOE<=0;
+                MDU_ResultE<=0;
             end
         else if(en!=1)
             if(clr)
@@ -136,9 +140,10 @@ module ID_EX(
                     Shamt_ExtendE<=0;
                     PC8E<=0;
                     PCE<=0;
-                    MulOpE<=0;
+                    MDUOpE<=`MDU_DUM;
                     MTHILOE<=0;
                     MFHILOE<=0;
+                    MDU_ResultE<=0;
                 end
             else
                 begin
@@ -162,9 +167,10 @@ module ID_EX(
                     Shamt_ExtendE<=Shamt_ExtendD;
                     PC8E<=PC8D;
                     PCE<=PCD;
-                    MulOpE<=MulOpD;
+                    MDUOpE<=MDUOpD;
                     MTHILOE<=MTHILOD;
                     MFHILOE<=MFHILOD;
+                    MDU_ResultE<=MDU_ResultD;
                 end
 endmodule //ID_EX
 `endif

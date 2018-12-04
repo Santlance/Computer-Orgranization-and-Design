@@ -18,7 +18,7 @@
 `include "./EX_MEM.v"
 `include "./MEM_WB.v"
 `include "./bypass.v"
-`include "./multiplier.v"
+`include "./mdu.v"
 `timescale 1ns / 1ps
 module Core(
     input clk,
@@ -65,12 +65,13 @@ module Core(
          Jump_RD,
          LinkD,
          JudgeMoveD,
-         LikelyD;
+         LikelyD,
+         MDU_ResultD;
     wire [3:0] ALUCtrlD;
     wire [3:0] JudgeOpD;
     wire [3:0] DataTypeD;
 
-    wire [3:0] MulOpD;
+    wire [3:0] MDUOpD;
     wire [1:0] MFHILOD;
     wire [1:0] MTHILOD;
 
@@ -107,10 +108,11 @@ module Core(
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
-    wire [3:0] MulOpE;
+    wire [3:0] MDUOpE;
     wire [1:0] MFHILOE;
     wire [1:0] MTHILOE;
-    wire Mul_BusyE;
+    wire [1:0] MDU_Result_StallE;
+    wire MDUBusyE,MDU_ResultE;
 
     wire [`Word] ALUAE,
                  ALUBE,
@@ -150,11 +152,11 @@ module Core(
                Forward_B_E;
     wire Stall_PC,
          Stall_IF_ID;
-    wire Stall_ID_EX=0,
-         Stall_EX_MEM=0,
+    wire Stall_ID_EX;
+    wire Stall_EX_MEM=0,
          Stall_MEM_WB=0;
-    wire Flush_EX_MEM=0,
-         Flush_MEM_WB=0;
+    wire Flush_EX_MEM;
+    wire Flush_MEM_WB=0;
     wire Flush_IF_ID,
          Flush_ID_EX;
 
@@ -233,9 +235,10 @@ module Core(
         .DataType(DataTypeD),
         .JudgeMove(JudgeMoveD),
         .Likely(LikelyD),
-        .MulOp(MulOpD),
+        .MDUOp(MDUOpD),
         .MTHILO(MTHILOD),
-        .MFHILO(MFHILOD)
+        .MFHILO(MFHILOD),
+        .MDU_Result(MDU_ResultD)
     );
 
     wire [`Word] _RD1D,_RD2D;
@@ -336,9 +339,10 @@ module Core(
         .Imm_ExtendD(Imm_ExtendD),
         .Shamt_ExtendD(Shamt_ExtendD),
         .PC8D(PC8D),
-        .MulOpD(MulOpD),
+        .MDUOpD(MDUOpD),
         .MTHILOD(MTHILOD),
         .MFHILOD(MFHILOD),
+        .MDU_ResultD(MDU_ResultD),
 
         .MemtoRegE(MemtoRegE),
         .MemWriteE(MemWriteE),
@@ -359,9 +363,10 @@ module Core(
         .Imm_ExtendE(Imm_ExtendE),
         .Shamt_ExtendE(Shamt_ExtendE),
         .PC8E(PC8E),
-        .MulOpE(MulOpE),
+        .MDUOpE(MDUOpE),
         .MTHILOE(MTHILOE),
         .MFHILOE(MFHILOE),
+        .MDU_ResultE(MDU_ResultE),
 
         .PCD(PCD),
         .PCE(PCE)
@@ -421,16 +426,18 @@ module Core(
         .out(RegAddrE)
     );
     
-    Multiplier _multiplier(
+    MDU _mdu(
         .clk(clk_re),
         .reset(reset),
         .MTHILO(MTHILOE),
         .SrcA(ALUAE),
         .SrcB(ALUBE),
-        .MulOp(MulOpE),
+        .MDUOp(MDUOpE),
+        .MDU_Result(MDU_ResultE),
         .HI(HIE),
         .LO(LOE),
-        .busy(Mul_BusyE)
+        .busy(MDUBusyE),
+        .MDU_Result_Stall(MDU_Result_StallE)
     );
 
     ALU _aluE(
@@ -548,17 +555,20 @@ module Core(
         .MemtoRegE(MemtoRegE),
         .branchD(branchD),
         .LikelyD(LikelyD),
-        .MulOpD(MulOpD),
-        .Mul_BusyE(Mul_BusyE),
+        .MDUOpD(MDUOpD),
+        .MDUBusyE(MDUBusyE),
         .MTHILOD(MTHILOD),
         .MFHILOD(MFHILOD),
+        .MDU_ResultE(MDU_ResultE),
+        .MDU_Result_Stall(MDU_Result_StallE),
         .Stall_PC(Stall_PC),
         .Stall_IF_ID(Stall_IF_ID),
         .Stall_ID_EX(Stall_ID_EX),
         .Stall_EX_MEM(Stall_EX_MEM),
         .Stall_MEM_WB(Stall_MEM_WB),
         .Flush_IF_ID(Flush_IF_ID),
-        .Flush_ID_EX(Flush_ID_EX)
+        .Flush_ID_EX(Flush_ID_EX),
+        .Flush_EX_MEM(Flush_EX_MEM)
     );
 endmodule // CPU
 `endif
