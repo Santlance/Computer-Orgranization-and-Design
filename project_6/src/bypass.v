@@ -60,7 +60,7 @@ module BYPASS(
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
     // Multiply Stall
-    wire MDUOp = (MDUOpD!=4'b1000)?1'b1:1'b0;
+    wire MDUOp = (MDUOpD!=`MDU_DUM)?1'b1:1'b0;
     wire MTHILO = (MTHILOD!=2'b10)?1'b1:1'b0;
     wire MFHILO = (MFHILOD!=2'b00)?1'b1:1'b0;
     wire Stall_MDU = (MDUBusyE && (MDUOp || MTHILO || MFHILO))?1'b1:1'b0;

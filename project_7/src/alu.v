@@ -23,20 +23,20 @@ module ALU(
     always @( * )
         begin
             case (ALUCtrl)
-                `ALU_ADD : ALURes <= ADD_Res_Temp[31:0];             // ADD
-                `ALU_SUB : ALURes <= SUB_Res_Temp[31:0];             // SUB
-                `ALU_AND : ALURes <= SrcA & SrcB;                    // AND
-                `ALU_OR  : ALURes <= SrcA | SrcB;                    // OR
-                `ALU_XOR : ALURes <= SrcA ^ SrcB;                    // XOR
-                `ALU_NOR : ALURes <= ~(SrcA | SrcB);                 // NOR
-                `ALU_SLL : ALURes <= SrcB << SrcA [`Low5];           // SLL
-                `ALU_SRA : ALURes <= $signed(SrcB) >>> SrcA[`Low5];  // SRA
-                `ALU_SRL : ALURes <= SrcB >> SrcA[`Low5];            // SRL
-                `ALU_LUI : ALURes <= {SrcB[`Half0], 16'b0};          // LUI
-                `ALU_LT  : ALURes <= $signed(SrcA) < $signed(SrcB);  // Less than, signed
-                `ALU_LTU : ALURes <= {1'b0,SrcA} < {1'b0,SrcB};            // Less than, unsigned
-                `ALU_CLO : ALURes <= leading_ones_result;
-                `ALU_CLZ : ALURes <= leading_zero_result;
+                `ALU_ADD : ALURes <= (IgnoreExcRI)?(SrcA+SrcB):(ADD_Res_Temp[31:0]);            // ADD
+                `ALU_SUB : ALURes <= (IgnoreExcRI)?(SrcA-SrcB):(SUB_Res_Temp[31:0]);            // SUB
+                `ALU_AND : ALURes <= SrcA & SrcB;                                               // AND
+                `ALU_OR  : ALURes <= SrcA | SrcB;                                               // OR
+                `ALU_XOR : ALURes <= SrcA ^ SrcB;                                               // XOR
+                `ALU_NOR : ALURes <= ~(SrcA | SrcB);                                            // NOR
+                `ALU_SLL : ALURes <= SrcB << SrcA [`Low5];                                      // SLL
+                `ALU_SRA : ALURes <= $signed(SrcB) >>> SrcA[`Low5];                             // SRA
+                `ALU_SRL : ALURes <= SrcB >> SrcA[`Low5];                                       // SRL
+                `ALU_LUI : ALURes <= {SrcB[`Half0], 16'b0};                                     // LUI
+                `ALU_LT  : ALURes <= $signed(SrcA) < $signed(SrcB);                             // Less than, signed
+                `ALU_LTU : ALURes <= {1'b0,SrcA} < {1'b0,SrcB};                                 // Less than, unsigned
+                `ALU_CLO : ALURes <= leading_ones_result;                                       // Counting leading ones
+                `ALU_CLZ : ALURes <= leading_zero_result;                                       // Counting leading zeros
                 default  : ALURes <= SrcA;
             endcase
         end

@@ -6,10 +6,12 @@
 module Bridge(
     input [`Word] PrAddr,
     input PrWE,
+    input [3:0] PrBE,
     input [`Word] PrWD,
-
-    input [3:0] PrDataType,
-    output [3:0] MEMDataType,
+    
+    output [`Word] Addr,
+    output [3:0] BE,
+    output [`Word] WD,
 
     output MEMWE,
     output Dev0WE,
@@ -22,8 +24,16 @@ module Bridge(
 
     input Dev0Irq,
     input Dev1Irq,
-    output [5:0] HWInt
+    output [5:0] HWInt,
+
+    input [`Word] PrPC,
+    output [`Word] PC
 );
+    assign Addr=PrAddr;
+    assign BE=PrBE;
+    assign WD=PrWD;
+    assign PC=PrPC;
+
     wire MEMHIT  = (PrAddr>=`DATAADDR_BEGIN) & (PrAddr<=`DATAADDR_END);
     wire Dev0HIT = (PrAddr>=`DEV0ADDR_BEGIN) & (PrAddr<=`DEV0ADDR_END);
     wire Dev1HIT = (PrAddr>=`DEV1ADDR_BEGIN) & (PrAddr<=`DEV1ADDR_END);
@@ -32,8 +42,6 @@ module Bridge(
     assign Dev0WE = PrWE & Dev0HIT;
     assign Dev1WE = PrWE & Dev1HIT;
     
-    assign MEMDataType = PrDataType;
-
     assign PrRD = (MEMHIT)?MEMRD:
                   (Dev0HIT)?Dev0RD:
                   (Dev1HIT)?Dev1RD:

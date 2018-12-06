@@ -82,17 +82,17 @@ module MDU(
                     4'b0101: // madd
                         begin
                             counter<=5;
-                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB)+{HI,LO};
+                            {temp_hi,temp_lo}<=$signed($signed(SrcA)*$signed(SrcB)+$signed({HI,LO}));
                         end
                     4'b0110: // msubu
                         begin
                             counter<=5;
-                            {temp_hi,temp_lo}<={1'b0,SrcA}*{1'b0,SrcB}-{HI,LO};
+                            {temp_hi,temp_lo}<={HI,LO}-{1'b0,SrcA}*{1'b0,SrcB};
                         end
                     4'b0111: // msub
                         begin
                             counter<=5;
-                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB)-{HI,LO};
+                            {temp_hi,temp_lo}<=$signed($signed({HI,LO})-$signed(SrcA)*$signed(SrcB));
                         end
                 endcase
 

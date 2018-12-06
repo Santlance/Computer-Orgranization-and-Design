@@ -31,9 +31,10 @@ module ID_EX(
     input [`Word] Imm_ExtendD,
     input [`Word] Shamt_ExtendD,
     input [`Word] PC8D,
-    input [3:0] MulOpD,
+    input [3:0] MDUOpD,
     input [1:0] MTHILOD,
     input [1:0] MFHILOD,
+    input MDU_ResultD,
     input IgnoreExcRID,
     input cpzWriteD,
     input cpztoRegD,
@@ -58,9 +59,10 @@ module ID_EX(
     output reg [`Word] Imm_ExtendE,
     output reg [`Word] Shamt_ExtendE,
     output reg [`Word] PC8E,
-    output reg [3:0] MulOpE,
+    output reg [3:0] MDUOpE,
     output reg [1:0] MTHILOE,
     output reg [1:0] MFHILOE,
+    output reg MDU_ResultE,
     output reg IgnoreExcRIE,
     output reg cpzWriteE,
     output reg cpztoRegE,
@@ -97,9 +99,10 @@ module ID_EX(
         Imm_ExtendE<=0;
         Shamt_ExtendE<=0;
         PC8E<=0;
-        MulOpE<=0;
+        MDUOpE<=`MDU_DUM;
         MTHILOE<=0;
         MFHILOE<=0;
+        MDU_ResultE<=0;
         IgnoreExcRIE<=0;
         cpzWriteE<=0;
         cpztoRegE<=0;
@@ -132,9 +135,10 @@ module ID_EX(
                 Imm_ExtendE<=0;
                 Shamt_ExtendE<=0;
                 PC8E<=0;
-                MulOpE<=0;
+                MDUOpE<=`MDU_DUM;
                 MTHILOE<=0;
                 MFHILOE<=0;
+                MDU_ResultE<=0;
                 IgnoreExcRIE<=0;
                 cpzWriteE<=0;
                 cpztoRegE<=0;
@@ -167,9 +171,10 @@ module ID_EX(
                     Imm_ExtendE<=0;
                     Shamt_ExtendE<=0;
                     PC8E<=0;
-                    MulOpE<=0;
+                    MDUOpE<=`MDU_DUM;
                     MTHILOE<=0;
                     MFHILOE<=0;
+                    MDU_ResultE<=0;
                     IgnoreExcRIE<=0;
                     cpzWriteE<=0;
                     cpztoRegE<=0;
@@ -201,9 +206,10 @@ module ID_EX(
                     Imm_ExtendE<=Imm_ExtendD;
                     Shamt_ExtendE<=Shamt_ExtendD;
                     PC8E<=PC8D;
-                    MulOpE<=MulOpD;
+                    MDUOpE<=MDUOpD;
                     MTHILOE<=MTHILOD;
                     MFHILOE<=MFHILOD;
+                    MDU_ResultE<=MDU_ResultD;
                     IgnoreExcRIE<=IgnoreExcRID;
                     cpzWriteE<=cpzWriteD;
                     cpztoRegE<=cpztoRegD;

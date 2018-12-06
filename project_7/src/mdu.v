@@ -1,26 +1,32 @@
-`ifndef __MULTIPLIER_V__
-`define __MULTIPLIER_V__
+`ifndef __MDU_V__
+`define __MDU_V__
 `include "./macro.vh"
 `include "./mux.v"
 `timescale 1ns / 1ps
-module Multiplier(
+module MDU(
     input clk,
     input reset,
+    input clr,
     input [1:0] MTHILO,
     input [`Word] SrcA,
     input [`Word] SrcB,
-    input [3:0] MulOp,
+    input [3:0] MDUOp,
+    input MDU_Result,
     output reg [`Word] HI,
     output reg [`Word] LO,
-    output busy
+    output busy,
+    output [1:0] MDU_Result_Stall
 );
     reg [3:0] counter;
+    reg state,_state;
 
     initial
     begin
         HI<=0;
         LO<=0;
         counter<=0;
+        state<=0;
+        _state<=0;
     end
 
     reg [`Word] temp_hi,temp_lo;
@@ -35,19 +41,24 @@ module Multiplier(
                 LO<=0;
                 counter<=0;
             end
+        else if(clr)                                 // exception clear
+            begin
+                temp_hi<=0;
+                temp_lo<=0;
+                counter<=0;
+            end
         else if(counter>0)
             begin
                 if(counter==4'b1)
                     begin
                         HI<=temp_hi;
-                        LO<=temp_lo;      
+                        LO<=temp_lo;
                     end
                 counter<=counter-4'b1;
             end
-        else
+        else if(~state)
             begin
-                
-                case (MulOp)
+                case (MDUOp)
                     4'b0000:  // unsigned mult
                         begin
                             counter<=5;
@@ -78,29 +89,51 @@ module Multiplier(
                     4'b0101: // madd
                         begin
                             counter<=5;
-                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB)+{HI,LO};
+                            {temp_hi,temp_lo}<=$signed($signed(SrcA)*$signed(SrcB)+$signed({HI,LO}));
                         end
                     4'b0110: // msubu
                         begin
                             counter<=5;
-                            {temp_hi,temp_lo}<={1'b0,SrcA}*{1'b0,SrcB}-{HI,LO};
+                            {temp_hi,temp_lo}<={HI,LO}-{1'b0,SrcA}*{1'b0,SrcB};
                         end
                     4'b0111: // msub
                         begin
                             counter<=5;
-                            {temp_hi,temp_lo}<=$signed(SrcA)*$signed(SrcB)-{HI,LO};
+                            {temp_hi,temp_lo}<=$signed($signed({HI,LO})-$signed(SrcA)*$signed(SrcB));
                         end
                 endcase
 
                 case (MTHILO)
-                    2'b00:
-                        LO<=SrcA;
                     2'b01:
+                        LO<=SrcA;
+                    2'b11:
                         HI<=SrcA;
                 endcase
             end
     end
 
     assign busy = (counter==0)?1'b0:1'b1;
+
+    always@(posedge clk)
+    begin
+        if(state)
+            state<=0;
+    end
+
+    always@(negedge busy)
+    begin
+        if(~state && MDU_Result)
+            state<=1;
+    end
+
+    always@(negedge clk)
+    begin
+        if(state)
+            _state<=1;
+        else _state<=0;
+    end
+
+    assign MDU_Result_Stall={_state,state};
+    
 endmodule // Multiplier
 `endif

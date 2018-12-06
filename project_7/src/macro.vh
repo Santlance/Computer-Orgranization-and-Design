@@ -95,10 +95,10 @@
 
 // Special-Branch
 `define REGIMM  6'b000001   // OpCode
-`define BGEZ    5'b00001    // BGEZ
-`define BLTZ    5'b00000    // BLTZ
-`define BGEZAL  5'b10001    // BGEZAL
-`define BLTZAL  5'b10000    // BLTZAL
+`define BGEZ    5'b00001    // RT
+`define BLTZ    5'b00000    // RT
+`define BGEZAL  5'b10001    // RT
+`define BLTZAL  5'b10000    // RT
 
 // J_Type
 `define J       6'b000010   // OpCode
@@ -124,6 +124,7 @@
 `define MADDU   6'b000001   // Funct
 `define MSUB    6'b000100   // Funct
 `define MSUBU   6'b000101   // Funct
+`define MUL     6'b000010   // Funct
 
 // ERET
 `define OP_ERET 6'b010000   // OpCode
@@ -156,16 +157,16 @@
 `define GEZ   4'b0100     // GEZ
 `define LTZ   4'b0101     // LTZ
 
-// Multiplier operations
-`define MUL_MULTU 4'b0000   // MULTU
-`define MUL_MULT  4'b0001   // MULT
-`define MUL_DIVU  4'b0010   // DIVU
-`define MUL_DIV   4'b0011   // DIV
-`define MUL_MADDU 4'b0100   // MADDU
-`define MUL_MADD  4'b0101   // MADD
-`define MUL_MSUBU 4'b0110   // MSUBU
-`define MUL_MSUB  4'b0111   // MSUB
-
+// MDU operations
+`define MDU_MULTU 4'b0000   // MULTU
+`define MDU_MULT  4'b0001   // MULT
+`define MDU_DIVU  4'b0010   // DIVU
+`define MDU_DIV   4'b0011   // DIV
+`define MDU_MADDU 4'b0100   // MADDU
+`define MDU_MADD  4'b0101   // MADD
+`define MDU_MSUBU 4'b0110   // MSUBU
+`define MDU_MSUB  4'b0111   // MSUB
+`define MDU_DUM   4'b1111   // Nothing
 
 // Forward
 `define FW_NONED 2'b00       // No forward
