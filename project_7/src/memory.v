@@ -9,19 +9,21 @@ module memory #(parameter WIDTH = 12)
     input reset,
     input we,
     input [3:0]be,
-    input [`Word] addr,
+    input [`Word] addr_in,
     input [`Word] wd,
     input [`Word] PC,
     output [`Word] rd
 );
 
-    localparam RAM_SIZE=2 ** (WIDTH-2);
+    wire [29:0] addr = addr_in[31:2];
+
+    localparam RAM_SIZE = 2 ** (WIDTH-2);
     reg [31:0] ram[RAM_SIZE-1:0];
     
     integer i;
     initial
     begin
-        for(i=0;i<RAM_SIZE-1;i=i+1)
+        for(i=0;i<RAM_SIZE;i=i+1)
             ram[i]=0;
     end
 
@@ -33,7 +35,7 @@ module memory #(parameter WIDTH = 12)
         begin
             if(reset)
                 begin
-                    for(i=0;i<RAM_SIZE-1;i=i+1)
+                    for(i=0;i<RAM_SIZE;i=i+1)
                     ram[i]=0;
                 end
             else if(we==1)
@@ -46,7 +48,7 @@ module memory #(parameter WIDTH = 12)
                     ram[addr][`Byte1]=wd[`Byte1];
                 if(be[0])
                     ram[addr][`Byte0]=wd[`Byte0];
-                $display("%d@%h: *%h <= %h", $time, PC, addr,ram[addr]);
+                $display("%d@%h: *%h <= %h", $time, PC, addr_in,ram[addr]);
             end
         end
 endmodule // memory

@@ -2,13 +2,14 @@
 module mips_tb;
     reg clk;
     reg reset;
+    
+    mips _mips(clk,reset);
     initial
         begin
             clk=0;
             reset=1;
-            #40;
-            reset=0;
-            forever #10 clk=~clk;
+            #10;
+            reset<=0;
         end
-    mips _mips(clk,reset);
+    always #5 clk=~clk;
 endmodule // mips_tb

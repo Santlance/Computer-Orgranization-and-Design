@@ -53,13 +53,13 @@ module mips(
         .PC(PC)
     );
 
-    memory #(12) _memoey
+    memory #(14) _memoey
     (
         .clk(clk_re),
         .reset(reset),
         .we(MEMWE),
         .be(BE),
-        .addr(Addr),
+        .addr_in(Addr),
         .wd(WD),
         .PC(PC),
         .rd(MEMRD)
@@ -71,7 +71,6 @@ module mips(
         .reset(reset),
         .addr(Addr),
         .we(Dev0WE),
-        .be(BE),
         .wd(WD),
         .RD(Dev0RD),
         .IRQ(Dev0Irq),
@@ -83,7 +82,6 @@ module mips(
         .clk(clk_re),
         .reset(reset),
         .addr(Addr),
-        .be(BE),
         .we(Dev1WE),
         .wd(WD),
         .RD(Dev1RD),

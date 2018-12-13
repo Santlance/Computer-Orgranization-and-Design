@@ -22,6 +22,8 @@ module MDU(
 
     initial
     begin
+        temp_hi<=0;
+        temp_lo<=0;
         HI<=0;
         LO<=0;
         counter<=0;
@@ -40,6 +42,8 @@ module MDU(
                 HI<=0;
                 LO<=0;
                 counter<=0;
+                state<=0;
+                _state<=0;
             end
         else if(clr)                                 // exception clear
             begin

@@ -9,7 +9,6 @@ module TC #(parameter base=`DEV0ADDR_BEGIN)
     input reset,
     input [`Word] addr,
     input we,
-    input [3:0] be,
     input [`Word] wd,
     output [`Word] RD,
     output IRQ,
@@ -17,7 +16,7 @@ module TC #(parameter base=`DEV0ADDR_BEGIN)
     input [`Word] PC
 );
     reg [`Word] ctrl,preset,count;
-
+    reg irq;
     wire [3:0] reg_select = addr-base;
 
     // -------- ctrl寄存器定义
@@ -34,51 +33,71 @@ module TC #(parameter base=`DEV0ADDR_BEGIN)
                 (reg_select==4'h8)?count:
                 0;
 
-    assign IRQ = (IM && (Mode==1'b0) && (count==32'b0))?1'b1:1'b0;
+    reg [1:0] state;
+    localparam IDLE = 2'b00;
+    localparam LOAD = 2'b01;
+    localparam CNT  = 2'b10;
+    localparam INT  = 2'b11;
 
     initial
     begin
         ctrl<=0;
         preset<=0;
         count<=0;
+        irq<=0;
+        state<=IDLE;
     end
-    
+
+    assign IRQ = IM & irq;
+
     always @(posedge clk)
     begin
         if(reset)
             begin
+                state<=IDLE;
                 ctrl<=0;
                 preset<=0;
                 count<=0;
+                irq<=0;
             end
         else
         begin
             if(we==1'b1)
                 case (reg_select)
-                    4'h0:
-                        begin
-                            if(be[3]) ctrl[`Byte3]=wd[`Byte3];
-                            if(be[2]) ctrl[`Byte2]=wd[`Byte2];
-                            if(be[1]) ctrl[`Byte1]=wd[`Byte1];
-                            if(be[0]) ctrl[`Byte0]=wd[`Byte0];
-                            $display("%d@%h: *%h <= %h", $time, PC, addr,ctrl);
-                        end
-                    4'h4:
-                        begin
-                            if(be[3]) preset[`Byte3]=wd[`Byte3];
-                            if(be[2]) preset[`Byte2]=wd[`Byte2];
-                            if(be[1]) preset[`Byte1]=wd[`Byte1];
-                            if(be[0]) preset[`Byte0]=wd[`Byte0];
-                            $display("%d@%h: *%h <= %h", $time, PC, addr,preset);
-                        end
+                    4'h0: ctrl<=wd;
+                    4'h4: preset<=wd;
                 endcase
-                
-            else if(count==32'b1 && CountEn==1'b1 && Mode==2'b00)
-                ctrl<={ctrl[31:0],1'b0};
-
-            if(CountEn==1'b1)
-                count<=(count>32'b0)?count-1:
-                                     preset;
+            else 
+                case (state)
+                IDLE:
+                    if(CountEn==1)
+                        begin
+                            state<=LOAD;
+                            irq<=0;
+                        end
+                LOAD:
+                    begin
+                        state<=CNT;
+                        count<=preset;
+                    end
+                CNT:
+                    if(CountEn==0)
+                        state<=IDLE;
+                    else if(count<=1 && CountEn==1)
+                        begin
+                            irq<=1;
+                            state<=INT;
+                            if(Mode==0)
+                                ctrl[0]<=0;
+                        end
+                    else count<=count-1;
+                INT:
+                    begin
+                        if(Mode!=0)
+                            irq<=0;
+                        state<=IDLE;
+                    end
+                endcase
         end
     end
 endmodule // TC

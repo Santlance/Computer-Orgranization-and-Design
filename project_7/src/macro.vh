@@ -147,6 +147,7 @@
 `define ALU_LTU 4'b1011     // Less than, unsigned, (0||SrcA)<(0||SrcB)
 `define ALU_CLO 4'b1100     // Count leading ones
 `define ALU_CLZ 4'b1101     // Count Leading zeros
+`define ALU_DUM 4'b1111
 
 // Judge operations
 
@@ -156,6 +157,7 @@
 `define LEZ   4'b0011     // LEZ
 `define GEZ   4'b0100     // GEZ
 `define LTZ   4'b0101     // LTZ
+`define JUDGE_DUM 4'b1111
 
 // MDU operations
 `define MDU_MULTU 4'b0000   // MULTU
@@ -204,3 +206,7 @@
 `define DEV3ADDR_BEGIN
 `define DEV4ADDR_BEGIN
 `define DEV5ADDR_BEGIN
+
+// IO offset
+
+`define TC_COUNT_OFFSET 'h8

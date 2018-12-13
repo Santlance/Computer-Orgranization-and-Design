@@ -37,15 +37,19 @@ module DM #(parameter WIDTH = 12)
 
     // Exception
     assign ExcOccur = (
-        (type==4'b0000 && byte_select!=2'b00)||
-        ((type==4'b0010 || type==4'b0011)&&byte_select[0]!=1'b0)||
-        (type!=4'b1111 && ~((addr_in>=`DATAADDR_BEGIN && addr_in<=`DATAADDR_END)||
-                            (addr_in>=`DEV0ADDR_BEGIN && addr_in<=`DEV0ADDR_END)||
-                            (addr_in>=`DEV1ADDR_BEGIN && addr_in<=`DEV1ADDR_END)))||
-        (we && (addr-`DEV0ADDR_BEGIN=='h8 || addr-`DEV1ADDR_BEGIN=='h8))
-    )?1:0;
+        (type!=4'b1111 && ~((addr_in>=`DATAADDR_BEGIN && addr_in<=`DATAADDR_END) ||                     // Out of range
+                            (addr_in>=`DEV0ADDR_BEGIN && addr_in<=`DEV0ADDR_END) ||             
+                            (addr_in>=`DEV1ADDR_BEGIN && addr_in<=`DEV1ADDR_END))) ||               
+        (type==4'b0000 && byte_select!=2'b00) ||                                                        // LW or SW not aligned
+        ((type==4'b0010 || type==4'b0011) && byte_select[0]!=1'b0) ||                                   // LH, LHU or SH not aligned
+        ((type!=4'b0000 && type!=4'b1111) && ((addr_in>=`DEV0ADDR_BEGIN && addr_in<=`DEV0ADDR_END) ||   // Not SW or LW but access to device
+                                              (addr_in>=`DEV1ADDR_BEGIN && addr_in<=`DEV1ADDR_END))) ||
+        (we && (addr==`DEV0ADDR_BEGIN + `TC_COUNT_OFFSET || addr==`DEV1ADDR_BEGIN + `TC_COUNT_OFFSET))  // Try to write count register
+    )?1'b1:1'b0;
 
-    assign ExcCode = ExcOccur?(we?`EXC_ADES:`EXC_ADEL):5'b00000;
+    assign ExcCode = ExcOccur?(we?`EXC_ADES:
+                                  `EXC_ADEL):
+                              5'b00000;
 
     assign PrWE = we & ~ExcOccur & ~Before_ExcOccur;
 

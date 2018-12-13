@@ -29,6 +29,7 @@ module PC(
                     PC<=nPC;
                 end
         end
+    
     assign ExcOccur = (~(PC>=`TEXTADDR_BEGIN && PC<=`TEXTADDR_END) || (PC[1:0]!=2'b0))?1'b1:1'b0;
     assign ExcCode = (ExcOccur==1'b1)?`EXC_ADEL:
                      5'b0;

@@ -27,7 +27,7 @@ module BYPASS(
     output [1:0] Forward_B_E,
 
     input ExcHandle,
-    input ERET,
+    input ERETD,
     output pc_Exc,
     output pc_ERET,
 
@@ -73,14 +73,16 @@ module BYPASS(
     wire Stall_MDU_Result = (MDU_ResultE && ~MDU_Result_Stall[1])?1'b1:1'b0;
 
     // Exception NPC select
-    assign pc_ERET=ERET;
-    assign pc_Exc=ExcHandle;
+    assign pc_ERET = ERETD;
+    assign pc_Exc = ExcHandle;
 
     assign Stall_PC = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
     assign Stall_IF_ID = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
     assign Stall_ID_EX = (Stall_MDU_Result)?1'b1:1'b0;
-    assign Flush_IF_ID = ((LikelyD && ~branchD)||ExcHandle||ERET)?1'b1:1'b0;
-    assign Flush_ID_EX = (Stall_Mem || Stall_MDU || ExcHandle||ERET)?1'b1:1'b0;
+    assign Stall_EX_MEM = 0;
+    assign Stall_MEM_WB = 0;
+    assign Flush_IF_ID = ((LikelyD && ~branchD) || ExcHandle || ERETD)?1'b1:1'b0;
+    assign Flush_ID_EX = (Stall_Mem || Stall_MDU || ExcHandle)?1'b1:1'b0;
     assign Flush_EX_MEM = (ExcHandle || (MDU_ResultE && ~MDU_Result_Stall[0]))?1'b1:1'b0;
     assign Flush_MEM_WB = (ExcHandle)?1'b1:1'b0;
 endmodule // BYPASS

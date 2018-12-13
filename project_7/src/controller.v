@@ -142,7 +142,7 @@ module ControlUnit(
                    (BLEZ)?`LEZ:
                    (BGEZ | BGEZAL)?`GEZ:
                    (BLTZ | BLTZAL)?`LTZ:
-                                   4'bxxxx;
+                                   `JUDGE_DUM;
 
     assign ALUCtrl=
         (ADDU | ADD | ADDIU | ADDI | LW | SW | LH | LHU | SH | LB | LBU | SB | LWL | LWR | SWL | SWR)?`ALU_ADD:
@@ -159,7 +159,7 @@ module ControlUnit(
         (SLTIU | SLTU)?`ALU_LTU:
         (CLO)?`ALU_CLO:
         (CLZ)?`ALU_CLZ:
-        4'bxxxx;
+        `ALU_DUM;
 
     assign ALUASrc = (SLL | SRA | SRL);
 
@@ -238,8 +238,6 @@ module ControlUnit(
     );
 
     assign ExcOccur = Unknown | SYSCALL | BREAK;
-
-    
 
     assign ExcCode = ExcOccur?
                         (Unknown?`EXC_RI:

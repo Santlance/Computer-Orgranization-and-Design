@@ -39,6 +39,7 @@ module ID_EX(
     input cpzWriteD,
     input cpztoRegD,
     input ExcBDD,
+    input ERETD,
 
     output reg MemtoRegE,
     output reg MemWriteE,
@@ -67,6 +68,7 @@ module ID_EX(
     output reg cpzWriteE,
     output reg cpztoRegE,
     output reg ExcBDE,
+    output reg ERETE,
 
     input ExcOccurD,
     input [4:0] ExcCodeD,
@@ -107,6 +109,7 @@ module ID_EX(
         cpzWriteE<=0;
         cpztoRegE<=0;
         ExcBDE<=0;
+        ERETE<=0;
         ExcOccurE<=0;
         ExcCodeE<=0;
 
@@ -142,6 +145,7 @@ module ID_EX(
                 IgnoreExcRIE<=0;
                 cpzWriteE<=0;
                 cpztoRegE<=0;
+                ERETE<=0;
                 ExcBDE<=0;
                 ExcOccurE<=0;
                 ExcCodeE<=0;
@@ -178,6 +182,7 @@ module ID_EX(
                     IgnoreExcRIE<=0;
                     cpzWriteE<=0;
                     cpztoRegE<=0;
+                    ERETE<=0;
                     ExcBDE<=0;
                     ExcOccurE<=0;
                     ExcCodeE<=0;
@@ -213,6 +218,7 @@ module ID_EX(
                     IgnoreExcRIE<=IgnoreExcRID;
                     cpzWriteE<=cpzWriteD;
                     cpztoRegE<=cpztoRegD;
+                    ERETE<=ERETD;
                     ExcBDE<=ExcBDD;
                     ExcOccurE<=ExcOccurD;
                     ExcCodeE<=ExcCodeD;

@@ -1,5 +1,5 @@
-`ifndef __CPU_V__
-`define __CPU_V__
+`ifndef __CORE_V__
+`define __CORE_V__
 `include "./macro.vh"
 `include "./controller.v"
 `include "./alu.v"
@@ -106,7 +106,8 @@ module Core(
          LinkE,
          IgnoreExcRIE,
          cpzWriteE,
-         cpztoRegE;
+         cpztoRegE,
+         ERETE;
     wire [3:0] ALUCtrlE;
     wire [3:0] DataTypeE;
     wire [`Word] RD1E,
@@ -164,10 +165,10 @@ module Core(
                Forward_A_E,
                Forward_B_E;
     wire Stall_PC,
-         Stall_IF_ID;
-    wire Stall_ID_EX;
-    wire Stall_EX_MEM=0,
-         Stall_MEM_WB=0;
+         Stall_IF_ID,
+         Stall_ID_EX,
+         Stall_EX_MEM,
+         Stall_MEM_WB;
     wire Flush_EX_MEM,
          Flush_MEM_WB;
     wire Flush_IF_ID,
@@ -410,6 +411,7 @@ module Core(
         .IgnoreExcRID(IgnoreExcRID),
         .cpzWriteD(cpzWriteD),
         .cpztoRegD(cpztoRegD),
+        .ERETD(ERETD),
 
         .MemtoRegE(MemtoRegE),
         .MemWriteE(MemWriteE),
@@ -437,6 +439,7 @@ module Core(
         .IgnoreExcRIE(IgnoreExcRIE),
         .cpzWriteE(cpzWriteE),
         .cpztoRegE(cpztoRegE),
+        .ERETE(ERETE),
 
         .ExcBDD(ExcBDD),
         .ExcBDE(ExcBDE),
@@ -676,7 +679,7 @@ module Core(
         .ExcBD(ExcBDM),
         .ExcCodeM(ExcCodeM),
         .HWInt(HWInt),
-        .ERET(ERETD),
+        .ERET(ERETE),
         .ExcHandle(ExcHandle),
         .EPC(EPC),
         .DataOut(cpzRD)
@@ -707,18 +710,18 @@ module Core(
         .MDU_ResultE(MDU_ResultE),
         .MDU_Result_Stall(MDU_Result_StallE),
         .ExcHandle(ExcHandle),
-        .ERET(ERETD),
+        .ERETD(ERETD),
         .pc_Exc(pc_Exc),
         .pc_ERET(pc_ERET),
         .Stall_PC(Stall_PC),
         .Stall_IF_ID(Stall_IF_ID),
         .Stall_ID_EX(Stall_ID_EX),
-        // .Stall_EX_MEM(Stall_EX_MEM),
-        // .Stall_MEM_WB(Stall_MEM_WB),
+        .Stall_EX_MEM(Stall_EX_MEM),
+        .Stall_MEM_WB(Stall_MEM_WB),
         .Flush_IF_ID(Flush_IF_ID),
         .Flush_ID_EX(Flush_ID_EX),
         .Flush_EX_MEM(Flush_EX_MEM),
         .Flush_MEM_WB(Flush_MEM_WB)
     );
-endmodule // cpu
+endmodule // core
 `endif

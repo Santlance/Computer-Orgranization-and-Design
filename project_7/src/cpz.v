@@ -21,14 +21,15 @@ module CPZ(
     output reg [`Word] EPC,
     output [`Word] DataOut
 );
-    localparam SR_INIT=32'h0000ff11;
-
+    
     reg [`Word] SR,                         // 12
                 Cause,                      // 13
                 //EPC,                      // 14
                 PRId;                       // 15
 
     // SR begin
+    localparam SR_INIT=32'h0000ff11;
+
     wire StatusIE = SR[0];                  // Interrupt Enable. 1: permit, 2: prohibit
     wire StatusEXL = SR[1];                 // Exception Level. 1: prohibit, 2: permit
     wire [5:0] StatusIM = SR[15:10];
@@ -43,10 +44,11 @@ module CPZ(
     // Cause end
 
     // EPC begin
+    wire [`Word] PC4M_Align = {PC4M[31:2],2'b0};
     // EPC end
-    wire [4:0] ExcCode = (|(HWInt & StatusIM))?5'b0:ExcCodeM;
+    wire [4:0] ExcCode = (|(Cause[15:10] & StatusIM))?5'b0:ExcCodeM;
 
-    assign ExcHandle = StatusIE && ~StatusEXL && ( ( | ExcCodeM) || ( | (HWInt & StatusIM)));
+    assign ExcHandle = ~StatusEXL && ( ( |ExcCodeM) || (StatusIE & ( |(CauseIP & StatusIM))));
 
     assign DataOut = (addr==12)?SR:
                      (addr==13)?Cause:
@@ -62,6 +64,11 @@ module CPZ(
         PRId<=114514;
     end
 
+    always @ (HWInt)
+    begin
+        Cause[15:10]<=HWInt;
+    end
+
     always @(posedge clk)
     begin
         if(reset)
@@ -74,21 +81,19 @@ module CPZ(
         else if(ExcHandle)
             begin
                 if(ExcBD==1'b1)
-                    EPC<=PC4M-8;
-                else EPC<=PC4M-4;
+                    EPC<=PC4M_Align - 8;
+                else EPC<=PC4M_Align - 4;
                 SR[1]<=1;
                 Cause[6:2]<=ExcCode;
                 Cause[31]<=ExcBD;
-                Cause[15:10]<=HWInt;
+                // Cause[15:10]<=HWInt;
             end
         else if(ERET==1'b1)
             SR[1]<=0;
         else if(we)
             case (addr)
                 12: SR<=wd;
-                13: Cause<=wd;
                 14: EPC<=wd;
-                15: PRId<=wd;
             endcase
     end
 endmodule // CPZ

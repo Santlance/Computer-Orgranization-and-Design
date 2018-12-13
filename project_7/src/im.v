@@ -13,6 +13,6 @@ module IM(
             $readmemh("code.txt",im_16k);
             $readmemh("code_handler.txt",im_16k,1120,2047);
         end
-    assign Inst=im_16k[addr[31:2]-32'h0000_0C00];      // 1024
+    assign Inst=im_16k[addr[31:2]-32'h0000_0C00];
 endmodule // IM
 `endif
