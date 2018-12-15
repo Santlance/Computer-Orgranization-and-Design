@@ -16,6 +16,7 @@ module EX_MEM(
     input [`Word] WriteDataE,
     input [3:0] DataTypeE,
     input [`Word] ALUResE,
+    input [3:0] MDUOpE,
 
     output reg [4:0] RegAddrM,
     output reg [`Word] WriteDataM,
@@ -24,6 +25,7 @@ module EX_MEM(
     output reg MemWriteM,
     output reg [3:0] DataTypeM,
     output reg RegWriteM,
+    output reg [3:0] MDUOpM,
 
     input ExcBDE,
     output reg ExcBDM,
@@ -49,6 +51,7 @@ module EX_MEM(
         ExcBDM<=0;
         ExcOccurM<=0;
         ExcCodeM<=0;
+        MDUOpM<=0;
 
         PC4M<=0;
         PCM<=0;
@@ -67,6 +70,7 @@ module EX_MEM(
                 ExcBDM<=0;
                 ExcOccurM<=0;
                 ExcCodeM<=0;
+                MDUOpM<=0;
 
                 PC4M<=0;
                 PCM<=0;
@@ -84,6 +88,7 @@ module EX_MEM(
                     ExcBDM<=0;
                     ExcOccurM<=0;
                     ExcCodeM<=0;
+                    MDUOpM<=0;
 
                     PC4M<=0;
                     PCM<=0;
@@ -100,6 +105,7 @@ module EX_MEM(
                     ExcBDM<=ExcBDE;
                     ExcOccurM<=ExcOccurE;
                     ExcCodeM<=ExcCodeE;
+                    MDUOpM<=MDUOpE;
 
                     PC4M<=PC4E;
                     PCM<=PCE;

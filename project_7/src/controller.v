@@ -31,6 +31,7 @@ module ControlUnit(
     output ExcOccur,
     output [4:0] ExcCode
 );
+    wire Unknown;
     wire [`Word] inst = Unknown?32'b0:inst_in;
 
     wire [`Inst_OP]       Op = inst[`Inst_OP];
@@ -41,7 +42,6 @@ module ControlUnit(
     wire [`Inst_Funct] Funct = inst[`Inst_Funct];
 
     wire R_Type = (Op==0)?1'b1:1'b0;
-    wire Unknown;
 
     wire ADD   = (R_Type && Shamt==0 && Funct==`ADD);
     wire ADDU  = (R_Type && Shamt==0 && Funct==`ADDU);
@@ -59,7 +59,6 @@ module ControlUnit(
     wire XORI  = (Op==`XORI);
     wire CLO   = (Op==`SPE2 && Shamt==0 && Funct==`CLO);
     wire CLZ   = (Op==`SPE2 && Shamt==0 && Funct==`CLZ);
-
 
     wire SLL  = (R_Type && Rs==0 && Funct==`SLL);
     wire SLLV = (R_Type && Shamt==0 && Funct==`SLLV);

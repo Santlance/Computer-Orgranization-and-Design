@@ -55,18 +55,12 @@ module CPZ(
                      (addr==14)?EPC:
                      (addr==15)?PRId:
                      0;
-
     initial
     begin
         SR<=SR_INIT;
         Cause<=0;
         EPC<=0;
         PRId<=114514;
-    end
-
-    always @ (HWInt)
-    begin
-        Cause[15:10]<=HWInt;
     end
 
     always @(posedge clk)
@@ -78,7 +72,10 @@ module CPZ(
                 EPC<=0;
                 PRId<=114514;
             end
-        else if(ExcHandle)
+        else 
+        begin
+            Cause[15:10]<=HWInt;
+            if(ExcHandle)
             begin
                 if(ExcBD==1'b1)
                     EPC<=PC4M_Align - 8;
@@ -88,13 +85,14 @@ module CPZ(
                 Cause[31]<=ExcBD;
                 // Cause[15:10]<=HWInt;
             end
-        else if(ERET==1'b1)
-            SR[1]<=0;
-        else if(we)
-            case (addr)
-                12: SR<=wd;
-                14: EPC<=wd;
-            endcase
+            else if(ERET==1'b1)
+                SR[1]<=0;
+            else if(we)
+                case (addr)
+                    12: SR<=wd;
+                    14: EPC<=wd;
+                endcase
+        end
     end
 endmodule // CPZ
 `endif

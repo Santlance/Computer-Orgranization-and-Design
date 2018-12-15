@@ -120,6 +120,7 @@ module Core(
     wire [`Word] Imm_ExtendE,
                  Shamt_ExtendE;
     
+    wire MDUCLR;
     wire [3:0] MDUOpE;
     wire [1:0] MFHILOE;
     wire [1:0] MTHILOE;
@@ -139,6 +140,7 @@ module Core(
     wire MemtoRegM,
          MemWriteM,
          RegWriteM;
+    wire [3:0] MDUOpM;
     wire [4:0] RegAddrM;
     wire [`Word] ALUResM;
     wire [`Word] WriteDataM;
@@ -312,7 +314,7 @@ module Core(
         .a0(_RD1D),
         .a1(ALUResM),
         .a2(RegDataW),
-        .a3(32'bx),
+        .a3(32'b0),
         .select(Forward_A_D),
         .out(RD1D)
     );
@@ -320,7 +322,7 @@ module Core(
         .a0(_RD2D),
         .a1(ALUResM),
         .a2(RegDataW),
-        .a3(32'bx),
+        .a3(32'b0),
         .select(Forward_B_D),
         .out(RD2D)
     );
@@ -487,7 +489,7 @@ module Core(
         .a0(RD2E),
         .a1(ALUResM),
         .a2(RegDataW),
-        .a3(32'bx),
+        .a3(32'b0),
         .select(Forward_B_E),
         .out(_RD2E)
     );
@@ -517,16 +519,17 @@ module Core(
     MDU _mdu(
         .clk(clk_re),
         .reset(reset),
-        .clr(ExcHandle),
+        .MDUCLR(MDUCLR),
+        .ExcHandle(ExcHandle),
         .MTHILO(MTHILOE),
         .SrcA(ALUAE),
         .SrcB(ALUBE),
         .MDUOp(MDUOpE),
-        .MDU_Result(MDU_ResultE),
+        // .MDU_Result(MDU_ResultE),
         .HI(HIE),
         .LO(LOE),
-        .busy(MDUBusyE),
-        .MDU_Result_Stall(MDU_Result_StallE)
+        .busy(MDUBusyE)
+        // .MDU_Result_Stall(MDU_Result_StallE)
     );
 
     ALU _aluD(
@@ -543,7 +546,7 @@ module Core(
         .a0(_ALUResE),
         .a1(LOE),
         .a2(HIE),
-        .a3(32'bx),
+        .a3(32'b0),
         .select(MFHILOE),
         .out(ALUResE)
     );
@@ -576,6 +579,7 @@ module Core(
         .WriteDataE(_RD2E),
         .DataTypeE(DataTypeE),
         .ALUResE(ALUResE),
+        .MDUOpE(MDUOpE),
 
         .RegAddrM(RegAddrM),
         .WriteDataM(WriteDataM),
@@ -584,6 +588,7 @@ module Core(
         .MemWriteM(MemWriteM),
         .DataTypeM(DataTypeM),
         .RegWriteM(RegWriteM),
+        .MDUOpM(MDUOpM),
 
         .ExcBDE(ExcBDE),
         .ExcBDM(ExcBDM),
@@ -707,12 +712,14 @@ module Core(
         .MDUBusyE(MDUBusyE),
         .MTHILOD(MTHILOD),
         .MFHILOD(MFHILOD),
-        .MDU_ResultE(MDU_ResultE),
-        .MDU_Result_Stall(MDU_Result_StallE),
+        .MDUOpM(MDUOpM),
+        // .MDU_ResultE(MDU_ResultE),
+        // .MDU_Result_Stall(MDU_Result_StallE),
         .ExcHandle(ExcHandle),
         .ERETD(ERETD),
         .pc_Exc(pc_Exc),
         .pc_ERET(pc_ERET),
+        .MDUCLR(MDUCLR),
         .Stall_PC(Stall_PC),
         .Stall_IF_ID(Stall_IF_ID),
         .Stall_ID_EX(Stall_ID_EX),

@@ -18,9 +18,10 @@ module BYPASS(
     input [3:0] MDUOpD,
     input [1:0] MTHILOD,
     input [1:0] MFHILOD,
+    input [3:0] MDUOpM,
     input MDUBusyE,
-    input MDU_ResultE,
-    input [1:0] MDU_Result_Stall,
+    // input MDU_ResultE,
+    // input [1:0] MDU_Result_Stall,
     output [1:0] Forward_A_D,
     output [1:0] Forward_B_D,
     output [1:0] Forward_A_E,
@@ -30,6 +31,8 @@ module BYPASS(
     input ERETD,
     output pc_Exc,
     output pc_ERET,
+
+    output MDUCLR,
 
     output Stall_PC,
     output Stall_IF_ID,
@@ -70,11 +73,13 @@ module BYPASS(
     wire MTHILO = (MTHILOD!=2'b10)?1'b1:1'b0;
     wire MFHILO = (MFHILOD!=2'b00)?1'b1:1'b0;
     wire Stall_MDU = (MDUBusyE && (MDUOp || MTHILO || MFHILO))?1'b1:1'b0;
-    wire Stall_MDU_Result = (MDU_ResultE && ~MDU_Result_Stall[1])?1'b1:1'b0;
-
+    // wire Stall_MDU_Result = (MDU_ResultE && ~MDU_Result_Stall[1])?1'b1:1'b0;
+    wire Stall_MDU_Result = 0;
     // Exception NPC select
     assign pc_ERET = ERETD;
     assign pc_Exc = ExcHandle;
+
+    assign MDUCLR = ExcHandle && (MDUOpM <= 4'b0111);
 
     assign Stall_PC = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
     assign Stall_IF_ID = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
@@ -83,7 +88,8 @@ module BYPASS(
     assign Stall_MEM_WB = 0;
     assign Flush_IF_ID = ((LikelyD && ~branchD) || ExcHandle || ERETD)?1'b1:1'b0;
     assign Flush_ID_EX = (Stall_Mem || Stall_MDU || ExcHandle)?1'b1:1'b0;
-    assign Flush_EX_MEM = (ExcHandle || (MDU_ResultE && ~MDU_Result_Stall[0]))?1'b1:1'b0;
+    // assign Flush_EX_MEM = (ExcHandle || (MDU_ResultE && ~MDU_Result_Stall[0]))?1'b1:1'b0;
+    assign Flush_EX_MEM = (ExcHandle)?1'b1:1'b0;
     assign Flush_MEM_WB = (ExcHandle)?1'b1:1'b0;
 endmodule // BYPASS
 `endif
