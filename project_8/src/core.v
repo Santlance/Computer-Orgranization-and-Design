@@ -29,18 +29,20 @@
 
 module Core(
     input clk,
+    input clk2,
     input reset,
 
     input [`Word] PrRD,
     input [5:0] HWInt,
-    output [`Word] PrAddr,
+    output [15:0] PrAddr,
     output [`Word] PrWD,
     output PrWE,
     output [3:0] PrBE,
-    output [`Word] PrPC
+    output [6:0] PrHIT
+    // output [`Word] PrPC
 );
     // EX/MEM/WB
-    wire clk_re=~clk;
+    // wire clk_re=~clk;
 
     // IF
     wire [`Word] nPCF;
@@ -48,17 +50,18 @@ module Core(
     wire [`Word] OriginalInstF;
     wire [`Word] InstF;
     wire [`Word] PC4F;
+    wire [15:0] PC3K;
     // ID
     wire [`Word]        InstD;
     wire [`Word]        PC4D;
-    wire [`Inst_OP]     OpD;
+    // wire [`Inst_OP]     OpD;
     wire [`Inst_RS]     RsD;
     wire [`Inst_RT]     RtD;
     wire [`Inst_RD]     RdD;
     wire [`Inst_RD]     Rd_OriginalD;
     wire [`Inst_Imm]    ImmD;
     wire [`Inst_S]      ShamtD;
-    wire [`Inst_Funct]  FunctD;
+    // wire [`Inst_Funct]  FunctD;
     wire [`Inst_J]      J_IndexD;
 
     wire MemtoRegD,
@@ -74,25 +77,25 @@ module Core(
          LinkD,
          JudgeMoveD,
          LikelyD,
-         MDU_ResultD,
+        //  MDU_ResultD,
          IgnoreExcRID,
          ERETD,
          cpzWriteD,
          cpztoRegD;
+    wire [4:0] RegAddrD;
     wire [3:0] ALUCtrlD;
     wire [3:0] JudgeOpD;
     wire [3:0] DataTypeD;
 
-    wire [3:0] MDUOpD;
-    wire [1:0] MFHILOD;
-    wire [1:0] MTHILOD;
+    // wire [3:0] MDUOpD;
+    // wire [1:0] MFHILOD;
+    // wire [1:0] MTHILOD;
 
     wire [`Word] RD1D,
                  RD2D,
                  JudgeAD;
 
     wire [`Word] Imm_ExtendD,
-                 Shamt_ExtendD,
                  J_addrD,
                  B_addrD,
                  PC8D;
@@ -107,13 +110,14 @@ module Core(
          ALUSrcE,
          RegWriteE,
          RegDstE,
-         ExtendE,
+        //  ExtendE,
          Jump_RE,
          LinkE,
          IgnoreExcRIE,
          cpzWriteE,
          cpztoRegE,
          ERETE;
+    wire [4:0] ShamtE;
     wire [4:0] cpzAddrE = RdE;
     wire [3:0] ALUCtrlE;
     wire [3:0] DataTypeE;
@@ -123,15 +127,14 @@ module Core(
                RtE,
                RdE;
     
-    wire [`Word] Imm_ExtendE,
-                 Shamt_ExtendE;
+    wire [`Word] Imm_ExtendE;
     
-    wire MDUCLR;
-    wire [3:0] MDUOpE;
-    wire [1:0] MFHILOE;
-    wire [1:0] MTHILOE;
+    // wire MDUCLR;
+    // wire [3:0] MDUOpE;
+    // wire [1:0] MFHILOE;
+    // wire [1:0] MTHILOE;
     // wire [1:0] MDU_Result_StallE;
-    wire MDUBusyE,MDU_ResultE;
+    // wire MDUBusyE,MDU_ResultE;
     wire [`Word] ALUAE,
                  ALUBE,
                  ALUResE,
@@ -148,7 +151,7 @@ module Core(
          RegWriteM,
          cpztoRegM,
          cpzWriteM;
-    wire [3:0] MDUOpM;
+    // wire [3:0] MDUOpM;
     wire [4:0] RegAddrM;
     wire [4:0] cpzAddrM;
     wire [`Word] ALUResM;
@@ -210,30 +213,31 @@ module Core(
     wire [`Word] cpzRD;
 
     // test
-    wire [`Word] PCF,PCD,PCE,PCM,PCW;
+    // wire [`Word] PCF,PCD,PCE,PCM;
 
     PC _pcF(
         .clk(clk),
         .reset(reset),
         .stall(Stall_PC),
         .ERET(pc_ERET),
-        .ExcHandle(ExcHandle),
+        .ExcHandle(pc_Exc),
         .nPC(nPCF),
         .EPC(EPC_Forward),
         .current_PC(current_PCF),
+        .PC3K(PC3K),
         .ExcOccur(ExcOccurF),
         .ExcCode(ExcCodeF)
     );
     
     IM _imF(
-        .addr(current_PCF),
+        .clk(clk2),
+        .addr_in(PC3K),
         .Inst(OriginalInstF)
     );
     assign InstF = (ExcOccurF)?32'b0:
                                OriginalInstF;
 
     NPC _npcF(
-        .clk(clk),
         .Branch(branchD),
         .Jump(JumpD),
         .Jump_r(Jump_RD),
@@ -247,7 +251,7 @@ module Core(
         .ExcBD(ExcBDF)
     );
 
-    assign PCF = current_PCF;
+    // assign PCF = current_PCF;
 
     IF_ID _if_id(
         .clk(clk),
@@ -264,20 +268,20 @@ module Core(
         .PC4D(PC4D),
         .ExcBDD(ExcBDD),
         .ExcOccurD(Before_ExcOccurD),
-        .ExcCodeD(Before_ExcCodeD),
-        .PCF(PCF),
-        .PCD(PCD)
+        .ExcCodeD(Before_ExcCodeD)
+        // .PCF(PCF),
+        // .PCD(PCD)
     );
 
     Inst_Filter _inst_filterD(
         .inst(InstD),
-        .op(OpD),
+        // .op(OpD),
         .rs(RsD),
         .rt(RtD),
         .rd(Rd_OriginalD),
         .imm(ImmD),
         .shamt(ShamtD),
-        .funct(FunctD),
+        // .funct(FunctD),
         .j_index(J_IndexD)
     );
 
@@ -300,10 +304,10 @@ module Core(
         .DataType(DataTypeD),
         .JudgeMove(JudgeMoveD),
         .Likely(LikelyD),
-        .MDUOp(MDUOpD),
-        .MTHILO(MTHILOD),
-        .MFHILO(MFHILOD),
-        .MDU_Result(MDU_ResultD),
+        // .MDUOp(MDUOpD),
+        // .MTHILO(MTHILOD),
+        // .MFHILO(MFHILOD),
+        // .MDU_Result(MDU_ResultD),
         .IgnoreExcRI(IgnoreExcRID),
         .cpzWrite(cpzWriteD),
         .cpztoReg(cpztoRegD),
@@ -323,36 +327,33 @@ module Core(
         .A3(RegAddrW),
         .wd(RegWriteDataW),
         .r1(RD1_OriginalD),
-        .r2(RD2_OriginalD),
-        .PC(PCW)
+        .r2(RD2_OriginalD)
     );
 
-    Mux4 #(32) _RD1D_forward_selector(
+    Mux3 #(32) _RD1D_forward_selector(
         .a0(RD1_OriginalD),
         .a1(ALUResM),
         .a2(RegWriteDataW),
-        .a3(32'b0),
         .select(Forward_A_D),
         .out(RD1D)
     );
-    Mux4 #(32) _RD2D_forward_selector(
+    Mux3 #(32) _RD2D_forward_selector(
         .a0(RD2_OriginalD),
         .a1(ALUResM),
         .a2(RegWriteDataW),
-        .a3(32'b0),
         .select(Forward_B_D),
         .out(RD2D)
     );
 
-    Mux2 #(32) _judge_srcB_selector(
-        .a0(RD1D),
-        .a1(32'b0),
-        .select(JudgeMoveD),
-        .out(JudgeAD)
-    );
+    // Mux2 #(32) _judge_srcB_selector(
+    //     .a0(RD1D),
+    //     .a1(32'b0),
+    //     .select(JudgeMoveD),
+    //     .out(JudgeAD)
+    // );
 
     Judge _judge(
-        .SrcA(JudgeAD),
+        .SrcA(RD1D),
         .SrcB(RD2D),
         .JudgeOp(JudgeOpD),
         .JudgeRes(JudgeResD)
@@ -378,15 +379,26 @@ module Core(
         .PC8(PC8D)
     );
 
+    wire [4:0] RegAddr_RegdstD;
+    Mux2 #(5) _regdst_selector(
+        .a0(RtD),
+        .a1(RdD),
+        .select(RegDstD),
+        .out(RegAddr_RegdstD)
+    );
+
+    wire Link_SelectD=LinkD&(~Jump_RD);
+    Mux2 #(5) _reglink_selector(
+        .a0(RegAddr_RegdstD),
+        .a1(5'b11111),
+        .select(Link_SelectD),
+        .out(RegAddrD)
+    );
+
     EXT #(16,32) _imm_extenderD(
         .in(ImmD),
         .type(ExtendD),
         .out(Imm_ExtendD)
-    );
-
-    zero_extend #(5,32) _shamt_extenderD(
-        .in(ShamtD),
-        .out(Shamt_ExtendD)
     );
 
     // Exception trans
@@ -410,10 +422,8 @@ module Core(
         .ALUCtrlD(ALUCtrlD),
         .ALUASrcD(ALUASrcD),
         .ALUSrcD(ALUSrcD),
-        .RegDstD(RegDstD),
         .RegWriteD(RegWriteD),
-        .ExtendD(ExtendD),
-        .Jump_RD(Jump_RD),
+        // .ExtendD(ExtendD),
         .LinkD(LinkD),
         .DataTypeD(DataTypeD),
         .RD1D(RD1D),
@@ -421,13 +431,14 @@ module Core(
         .RsD(RsD),
         .RtD(RtD),
         .RdD(RdD),
+        .RegAddrD(RegAddrD),
         .Imm_ExtendD(Imm_ExtendD),
-        .Shamt_ExtendD(Shamt_ExtendD),
+        .ShamtD(ShamtD),
         .PC8D(PC8D),
-        .MDUOpD(MDUOpD),
-        .MTHILOD(MTHILOD),
-        .MFHILOD(MFHILOD),
-        .MDU_ResultD(MDU_ResultD),
+        // .MDUOpD(MDUOpD),
+        // .MTHILOD(MTHILOD),
+        // .MFHILOD(MFHILOD),
+        // .MDU_ResultD(MDU_ResultD),
         .IgnoreExcRID(IgnoreExcRID),
         .cpzWriteD(cpzWriteD),
         .cpztoRegD(cpztoRegD),
@@ -440,9 +451,7 @@ module Core(
         .ALUASrcE(ALUASrcE),
         .ALUSrcE(ALUSrcE),
         .RegWriteE(RegWriteE),
-        .RegDstE(RegDstE),
-        .ExtendE(ExtendE),
-        .Jump_RE(Jump_RE),
+        // .ExtendE(ExtendE),
         .LinkE(LinkE),
         .DataTypeE(DataTypeE),
         .RD1E(RD1E),
@@ -450,13 +459,14 @@ module Core(
         .RsE(RsE),
         .RtE(RtE),
         .RdE(RdE),
+        .RegAddrE(RegAddrE),
         .Imm_ExtendE(Imm_ExtendE),
-        .Shamt_ExtendE(Shamt_ExtendE),
+        .ShamtE(ShamtE),
         .PC8E(PC8E),
-        .MDUOpE(MDUOpE),
-        .MTHILOE(MTHILOE),
-        .MFHILOE(MFHILOE),
-        .MDU_ResultE(MDU_ResultE),
+        // .MDUOpE(MDUOpE),
+        // .MTHILOE(MTHILOE),
+        // .MFHILOE(MFHILOE),
+        // .MDU_ResultE(MDU_ResultE),
         .IgnoreExcRIE(IgnoreExcRIE),
         .cpzWriteE(cpzWriteE),
         .cpztoRegE(cpztoRegE),
@@ -470,41 +480,44 @@ module Core(
         .ExcCodeE(Before_ExcCodeE),
 
         .PC4D(PC4D),
-        .PC4E(PC4E),
-        .PCD(PCD),
-        .PCE(PCE)
+        .PC4E(PC4E)
+        // .PCD(PCD),
+        // .PCE(PCE)
     );
 
-    wire [`Word] RD1_ForwardE,
-                 ALUA_ShamtE;
-
+    // wire [`Word] RD1_ForwardE,
+    //              ALUA_ShamtE;
+    wire [`Word] Shamt_Link = (ALUASrcE) ? {27'b0,ShamtE}:
+                                         PC8E;
+    wire [1:0] ALUAE_select = ~(ALUASrcE | LinkE) ? Forward_A_E:
+                                                    2'b11 ;
     Mux4 #(`Word_Size) _ALUAE_forward_selector(
         .a0(RD1E),
         .a1(RegDataM),
         .a2(RegWriteDataW),
-        .a3(32'b0),
-        .select(Forward_A_E),
-        .out(RD1_ForwardE)
-    );
-    Mux2 #(`Word_Size) _ALU_srcA_shamt_selector(
-        .a0(RD1_ForwardE),
-        .a1(Shamt_ExtendE),
-        .select(ALUASrcE),
-        .out(ALUA_ShamtE)
-    );
-    Mux2 #(`Word_Size) _ALU_srcA_link_selector(
-        .a0(ALUA_ShamtE),
-        .a1(PC8E),
-        .select(LinkE),
+        .a3(Shamt_Link),
+        .select(ALUAE_select),
         .out(ALUAE)
     );
 
+    // Mux2 #(`Word_Size) _ALU_srcA_shamt_selector(
+    //     .a0(RD1_ForwardE),
+    //     .a1({27'b0,ShamtE}),
+    //     .select(ALUASrcE),
+    //     .out(ALUA_ShamtE)
+    // );
+    // Mux2 #(`Word_Size) _ALU_srcA_link_selector(
+    //     .a0(ALUA_ShamtE),
+    //     .a1(PC8E),
+    //     .select(LinkE),
+    //     .out(ALUAE)
+    // );
+
     wire [`Word] RD2_ForwardE;
-    Mux4 #(`Word_Size) _ALUBE_forward_selector(
+    Mux3 #(`Word_Size) _ALUBE_forward_selector(
         .a0(RD2E),
         .a1(RegDataM),
         .a2(RegWriteDataW),
-        .a3(32'b0),
         .select(Forward_B_E),
         .out(RD2_ForwardE)
     );
@@ -515,22 +528,7 @@ module Core(
         .out(ALUBE)
     ); 
 
-    wire [4:0] RegAddr_RegdstE;
-    Mux2 #(5) _regdst_selector(
-        .a0(RtE),
-        .a1(RdE),
-        .select(RegDstE),
-        .out(RegAddr_RegdstE)
-    );
-
-    wire Link_SelectE=LinkE&(~Jump_RE);
-    Mux2 #(5) _reglink_selector(
-        .a0(RegAddr_RegdstE),
-        .a1(5'b11111),
-        .select(Link_SelectE),
-        .out(RegAddrE)
-    );
-    
+    /*
     MDU _mdu(
         .clk(clk_re),
         .reset(reset),
@@ -546,24 +544,26 @@ module Core(
         .busy(MDUBusyE)
         // .MDU_Result_Stall(MDU_Result_StallE)
     );
-
-    ALU _aluD(
+    */
+    ALU _aluE(
         .SrcA(ALUAE),
         .SrcB(ALUBE),
         .ALUCtrl(ALUCtrlE),
         .IgnoreExcRI(IgnoreExcRIE),
-        .ALURes(ALURes_OriginalE),
+        .ALURes(ALUResE),
         .ExcOccur(ExcOccurALUE)
     );
 
-    Mux4 #(32) _mfhilo_selectorE(
-        .a0(ALURes_OriginalE),
-        .a1(LOE),
-        .a2(HIE),
-        .a3(32'b0),
-        .select(MFHILOE),
-        .out(ALUResE)
-    );
+    // assign ALUResE = ALURes_OriginalE;
+
+    // Mux4 #(32) _mfhilo_selectorE(
+    //     .a0(ALURes_OriginalE),
+    //     .a1(LOE),
+    //     .a2(HIE),
+    //     .a3(32'b0),
+    //     .select(MFHILOE),
+    //     .out(ALUResE)
+    // );
 
     // Exception trans
     wire [4:0] _ExcCodeE_Maybe_Rv;
@@ -582,7 +582,7 @@ module Core(
     assign ExcOccurE = Before_ExcOccurE | ExcOccurALUE;
 
     EX_MEM _ex_mem(
-        .clk(clk_re),
+        .clk(clk),
         .reset(reset),
         .clr(Flush_EX_MEM),
         .stall(Stall_EX_MEM),
@@ -593,7 +593,7 @@ module Core(
         .WriteDataE(RD2_ForwardE),
         .DataTypeE(DataTypeE),
         .ALUResE(ALUResE),
-        .MDUOpE(MDUOpE),
+        // .MDUOpE(MDUOpE),
         .cpzWriteE(cpzWriteE),
         .cpztoRegE(cpztoRegE),
         .cpzAddrE(cpzAddrE),
@@ -605,7 +605,7 @@ module Core(
         .MemWriteM(MemWriteM),
         .DataTypeM(DataTypeM),
         .RegWriteM(RegWriteM),
-        .MDUOpM(MDUOpM),
+        // .MDUOpM(MDUOpM),
         .cpzWriteM(cpzWriteM),
         .cpztoRegM(cpztoRegM),
         .cpzAddrM(cpzAddrM),
@@ -620,9 +620,9 @@ module Core(
         .ERETM(ERETM),
 
         .PC4E(PC4E),
-        .PC4M(PC4M),
-        .PCE(PCE),
-        .PCM(PCM)
+        .PC4M(PC4M)
+        // .PCE(PCE),
+        // .PCM(PCM)
     );
 
     Mux2 #(32) _regDataM_cpz_selector(
@@ -639,18 +639,18 @@ module Core(
         .wd(WriteDataM),
         .PrRD(PrRD),
         .rd(MemRDM),
-        .PC(PCM),
+        // .PC(PCM),
         .rd_extend_type(MemRDSelM),
         .byte_select(ByteSelM),
         .PrAddr(PrAddr),
         .PrWD(PrWD),
         .PrWE(PrWE),
         .PrBE(PrBE),
+        .PrHIT(PrHIT),
         .Before_ExcOccur(Before_ExcOccurM),
         .ExcOccur(ExcOccurDMM),
-        .ExcCode(ExcCodeDMM),
-        
-        .PrPC(PrPC)
+        .ExcCode(ExcCodeDMM)
+        // .PrPC(PrPC)
     );
 
     // Exception selector
@@ -663,7 +663,7 @@ module Core(
     );
 
     MEM_WB _mem_wb(
-        .clk(clk_re),
+        .clk(clk),
         .reset(reset),
         .clr(Flush_MEM_WB),
         .stall(Stall_MEM_WB),
@@ -681,30 +681,29 @@ module Core(
         .MemRDSelW(MemRDSelW),
         .ByteSelW(ByteSelW),
         .RegDataW(RegDataW),
-        .RegAddrW(RegAddrW),
-
-        .PCM(PCM),
-        .PCW(PCW)
+        .RegAddrW(RegAddrW)
     );
     
-    MEMRD_EXT _memrd_ext(
-        .in(MemRDW),
+    MEMRD_EXT _memrd_ext_selector(
+        .MemIn(MemRDW),
+        .RegIn(RegDataW),
         .type(MemRDSelW),
         .byte_select(ByteSelW),
-        .out(MemRD_ExtendW)
-    );
-
-    Mux2 #(32) _memtoreg_selector(
-        .a0(RegDataW),
-        .a1(MemRD_ExtendW),
-        .select(MemtoRegW),
+        .MemtoReg(MemtoRegW),
         .out(RegWriteDataW)
     );
+
+    // Mux2 #(32) _memtoreg_selector(
+    //     .a0(RegDataW),
+    //     .a1(MemRD_ExtendW),
+    //     .select(MemtoRegW),
+    //     .out(RegWriteDataW)
+    // );
 
     wire cpzWE = cpzWriteM & ~ExcHandle;
 
     CPZ _cpz(
-        .clk(clk_re),
+        .clk(clk),
         .reset(reset),
         .addr(cpzAddrM),
         .we(cpzWriteM),
@@ -716,13 +715,13 @@ module Core(
         .HWInt(HWInt),
         .ERET(ERETM),
         .ExcHandle(ExcHandle),
-        .EPC(EPC),
+        .EPC_out(EPC),
         .DataOut(cpzRD)
     );
 
     Mux2 #(`Word_Size) _EPC_forward_selector(
         .a0(EPC),
-        .a1(RD2_ForwardE),
+        .a1(ALUBE),
         .select(Forward_EPC),
         .out(EPC_Forward)
     );
@@ -736,6 +735,7 @@ module Core(
         .RegAddrW(RegAddrW),
         .RegAddrM(RegAddrM),
         .RegAddrE(RegAddrE),
+        .RegWriteE(RegWriteE),
         .RegWriteM(RegWriteM),
         .RegWriteW(RegWriteW),
         .Forward_A_D(Forward_A_D),
@@ -743,23 +743,27 @@ module Core(
         .Forward_A_E(Forward_A_E),
         .Forward_B_E(Forward_B_E),
         .Forward_EPC(Forward_EPC),
+        .MemtoRegM(MemtoRegM),
         .MemtoRegE(MemtoRegE),
-        .branchD(branchD),
-        .LikelyD(LikelyD),
-        .MDUOpD(MDUOpD),
-        .MDUBusyE(MDUBusyE),
-        .MTHILOD(MTHILOD),
-        .MFHILOD(MFHILOD),
-        .MDUOpM(MDUOpM),
+        .JudgeOpD(JudgeOpD),
+        .Jump_R(Jump_RD),
+        .cpztoRegE(cpztoRegE),
+        .cpztoRegM(cpztoRegM),
+        // .branchD(branchD),
+        // .LikelyD(LikelyD),
+        // .MDUOpD(MDUOpD),
+        // .MDUBusyE(MDUBusyE),
+        // .MTHILOD(MTHILOD),
+        // .MFHILOD(MFHILOD),
+        // .MDUOpM(MDUOpM),
         .cpzWriteE(cpzWriteE),
-        .cpzAddrE(cpzAddrE),
         // .MDU_ResultE(MDU_ResultE),
         // .MDU_Result_Stall(MDU_Result_StallE),
         .ExcHandle(ExcHandle),
         .ERETD(ERETD),
         .pc_Exc(pc_Exc),
         .pc_ERET(pc_ERET),
-        .MDUCLR(MDUCLR),
+        // .MDUCLR(MDUCLR),
         .Stall_PC(Stall_PC),
         .Stall_IF_ID(Stall_IF_ID),
         .Stall_ID_EX(Stall_ID_EX),

@@ -24,28 +24,19 @@ module IF_ID(
     output reg [`Word] PC4D,
     output reg ExcBDD,
     output reg ExcOccurD,
-    output reg [4:0] ExcCodeD,
+    output reg [4:0] ExcCodeD
 
-    input [`Word] PCF,
-    output reg [`Word] PCD
+    // input [`Word] PCF,
+    // output reg [`Word] PCD
 );
-    initial
-    begin
-        InstD<=0;
-        PC4D<=0;
-        PCD<=0;
-        ExcBDD<=0;
-        ExcOccurD<=0;
-        ExcCodeD<=0;
-    end
-
+    
     always @(posedge clk)
     begin
         if(reset)
             begin
                 InstD<=0;
                 PC4D<=0;
-                PCD<=0;
+                // PCD<=0;
                 ExcBDD<=0;
                 ExcOccurD<=0;
                 ExcCodeD<=0;
@@ -61,7 +52,7 @@ module IF_ID(
             begin
                 InstD<=InstF;
                 PC4D<=PC4F;
-                PCD<=PCF;
+                // PCD<=PCF;
                 ExcBDD<=ExcBDF;
                 ExcOccurD<=ExcOccurF;
                 ExcCodeD<=ExcCodeF;

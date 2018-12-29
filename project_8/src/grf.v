@@ -16,22 +16,23 @@ module GRF(
     input [4:0] A2,
     input [4:0] A3,
     input [`Word] wd,
-    input [`Word] PC,       // for test
     output [`Word] r1,
     output [`Word] r2
 );
 
-    reg [31:0] grf[`Word];
+    reg [`Word] grf[31:0];
     
-    assign r1=grf[A1];
-    assign r2=grf[A2];
+    assign r1 = (A1==A3)?wd:
+                         grf[A1];
+    assign r2 = (A2==A3)?wd:
+                         grf[A2];
 
     integer i;
-    initial
-        begin
-            for(i=0;i<32;i=i+1)
-            grf[i]<=0;
-        end
+    // initial
+    //     begin
+    //         for(i=0;i<32;i=i+1)
+    //         grf[i]<=0;
+    //     end
     always @(posedge clk) 
         begin
             if(reset)
@@ -39,13 +40,10 @@ module GRF(
                     for(i=0;i<32;i=i+1)
                     grf[i]<=0;
                 end
-            else if(we==1 && A3!=0)
+            else if(we && A3!=0)
                 begin
-                    $display("%d@%h: $%d <= %h", $time, PC, A3,wd);
-                    if(A3!=0)
-                    begin
-                        grf[A3]<=wd;
-                    end
+                    $display("%d: $%d <= %h", $time,A3,wd);
+                    grf[A3]<=wd;
                 end
         end
         

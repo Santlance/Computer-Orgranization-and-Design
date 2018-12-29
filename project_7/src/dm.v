@@ -1,3 +1,9 @@
+/*
+ * name: DM
+ * author: btapple
+ * description: data menagement.
+ */
+
 `ifndef __DM_V__
 `define __DM_V__
 `include "./macro.vh"

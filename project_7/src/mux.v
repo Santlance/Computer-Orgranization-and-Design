@@ -1,3 +1,9 @@
+/*
+ * name: MUX
+ * author: btapple
+ * description: some multiplexers.
+ */
+
 `ifndef __MUX_V__
 `define __MUX_V__
 `include "./macro.vh"

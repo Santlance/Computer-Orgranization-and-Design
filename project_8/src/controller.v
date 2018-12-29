@@ -26,10 +26,10 @@ module ControlUnit(
     output [3:0] DataType,
     output JudgeMove,
     output Likely,
-    output [3:0] MDUOp,
-    output [1:0] MTHILO,
-    output [1:0] MFHILO,
-    output MDU_Result,
+    // output [3:0] MDUOp,
+    // output [1:0] MTHILO,
+    // output [1:0] MFHILO,
+    // output MDU_Result,
     output IgnoreExcRI,
     output ERET,
     output cpzWrite,
@@ -206,24 +206,24 @@ module ControlUnit(
 
     assign Likely = (BEQL | BNEL);
 
-    assign MDUOp = (MULTU)?`MDU_MULTU:
-                   (MULT | MUL)?`MDU_MULT:
-                   (DIVU)?`MDU_DIVU:
-                   (DIV)?`MDU_DIV:
-                   (MADDU)?`MDU_MADDU:
-                   (MADD)?`MDU_MADD:
-                   (MSUBU)?`MDU_MSUBU:
-                   (MSUB)?`MDU_MSUB:
-                            `MDU_DUM;
+    // assign MDUOp = (MULTU)?`MDU_MULTU:
+    //                (MULT | MUL)?`MDU_MULT:
+    //                (DIVU)?`MDU_DIVU:
+    //                (DIV)?`MDU_DIV:
+    //                (MADDU)?`MDU_MADDU:
+    //                (MADD)?`MDU_MADD:
+    //                (MSUBU)?`MDU_MSUBU:
+    //                (MSUB)?`MDU_MSUB:
+    //                         `MDU_DUM;
                    
-    assign MTHILO = (MTLO)?2'b01:
-                    (MTHI)?2'b11:
-                    2'b00;
-    assign MFHILO = (MFLO | MUL)?2'b01:
-                    (MFHI)?2'b10:
-                    2'b00;
+    // assign MTHILO = (MTLO)?2'b01:
+    //                 (MTHI)?2'b11:
+    //                 2'b00;
+    // assign MFHILO = (MFLO | MUL)?2'b01:
+    //                 (MFHI)?2'b10:
+    //                 2'b00;
 
-    assign MDU_Result = (MUL);
+    // assign MDU_Result = (MUL);
 
     assign cpzWrite = (MTC0);
     assign cpztoReg = (MFC0);

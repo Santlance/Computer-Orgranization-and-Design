@@ -1,3 +1,9 @@
+/*
+ * name: EXT
+ * author: btapple
+ * description: some extenders.
+ */
+
 `ifndef __EXT_V__
 `define __EXT_V__
 `include "./macro.vh"

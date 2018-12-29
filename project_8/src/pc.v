@@ -17,23 +17,18 @@ module PC(
     input [`Word] nPC,
     input [`Word] EPC,
     output [`Word] current_PC,
-
+    output [15:0] PC3K,
     output ExcOccur,
     output [4:0] ExcCode
 );
     parameter INIT = 32'h0000_3000;
     reg [`Word] PC;
 
-    initial
-    begin
-        PC<=INIT;
-    end
-
     always @(posedge clk) 
     begin
         if(reset)
             PC<=INIT;
-        else if(stall!=1)
+        else if(~stall)
             PC<=nPC;
     end
     
@@ -41,7 +36,9 @@ module PC(
                         (ERET)?     EPC:
                                     PC;
 
-    assign ExcOccur = (~(PC>=`TEXTADDR_BEGIN && PC<=`TEXTADDR_END) || (PC[1:0]!=2'b0))?1'b1:1'b0;
+    assign PC3K = current_PC[15:0] - 16'h3000;
+
+    assign ExcOccur = ((|(PC3K[15:13])) || (PC3K[1:0]!=2'b0))?1'b1:1'b0;
     assign ExcCode = (ExcOccur==1'b1)?`EXC_ADEL:
                      5'b0;
 

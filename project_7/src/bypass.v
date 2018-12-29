@@ -1,3 +1,10 @@
+/*
+ * name: Bypass
+ * author: btapple
+ * description: outside the pipelines, dealing with the forwarding, stalling and flushing, 
+ *              and transmitting some controlling signals.
+ */
+
 `ifndef __BYPASS_V__
 `define __BYPASS_V__
 `include "./macro.vh"
@@ -20,13 +27,15 @@ module BYPASS(
     input [1:0] MFHILOD,
     input [3:0] MDUOpM,
     input MDUBusyE,
+    input cpzWriteE,
+    input [4:0] cpzAddrE,
     // input MDU_ResultE,
     // input [1:0] MDU_Result_Stall,
     output [1:0] Forward_A_D,
     output [1:0] Forward_B_D,
     output [1:0] Forward_A_E,
     output [1:0] Forward_B_E,
-
+    output Forward_EPC,
     input ExcHandle,
     input ERETD,
     output pc_Exc,
@@ -68,25 +77,32 @@ module BYPASS(
     // Load Stall
     wire Stall_Mem = (MemtoRegE) && (RsD==RegAddrE || RtD==RegAddrE);
 
+    // ERET stall (due to MTC0)
+
+    assign Forward_EPC = (cpzWriteE && RegAddrE == `EPC_ID);
+
     // Multiply Stall
     wire MDUOp = (MDUOpD!=`MDU_DUM)?1'b1:1'b0;
     wire MTHILO = (MTHILOD!=2'b10)?1'b1:1'b0;
     wire MFHILO = (MFHILOD!=2'b00)?1'b1:1'b0;
+
     wire Stall_MDU = (MDUBusyE && (MDUOp || MTHILO || MFHILO))?1'b1:1'b0;
+
     // wire Stall_MDU_Result = (MDU_ResultE && ~MDU_Result_Stall[1])?1'b1:1'b0;
     wire Stall_MDU_Result = 0;
+
     // Exception NPC select
     assign pc_ERET = ERETD;
     assign pc_Exc = ExcHandle;
 
-    assign MDUCLR = ExcHandle && (MDUOpM <= 4'b0111);
+    assign MDUCLR = ExcHandle && (MDUOpM != `MDU_DUM);
 
-    assign Stall_PC = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
-    assign Stall_IF_ID = (Stall_Mem || Stall_MDU || Stall_MDU_Result)?1'b1:1'b0;
+    assign Stall_PC = ((Stall_Mem || Stall_MDU || Stall_MDU_Result) && ~ExcHandle)?1'b1:1'b0;
+    assign Stall_IF_ID = ((Stall_Mem || Stall_MDU || Stall_MDU_Result) && ~ExcHandle) ?1'b1:1'b0;
     assign Stall_ID_EX = (Stall_MDU_Result)?1'b1:1'b0;
     assign Stall_EX_MEM = 0;
     assign Stall_MEM_WB = 0;
-    assign Flush_IF_ID = ((LikelyD && ~branchD) || ExcHandle || ERETD)?1'b1:1'b0;
+    assign Flush_IF_ID = (LikelyD && ~branchD)?1'b1:1'b0;
     assign Flush_ID_EX = (Stall_Mem || Stall_MDU || ExcHandle)?1'b1:1'b0;
     // assign Flush_EX_MEM = (ExcHandle || (MDU_ResultE && ~MDU_Result_Stall[0]))?1'b1:1'b0;
     assign Flush_EX_MEM = (ExcHandle)?1'b1:1'b0;

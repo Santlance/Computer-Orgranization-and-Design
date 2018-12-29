@@ -9,7 +9,6 @@
 `include "./macro.vh"
 `timescale 1ns / 1ps
 module NPC(
-    input clk,
     input Branch,
     input Jump,
     input Jump_r,

@@ -1,4 +1,9 @@
-// Description: 32bit_ALU
+/*
+ * name: ALU
+ * author: btapple
+ * description: 32bit-ALU
+ */
+
 `ifndef __ALU_V__
 `define __ALU_V__
 `include "./macro.vh"
@@ -9,9 +14,7 @@ module ALU(
     input [3:0] ALUCtrl,
     input IgnoreExcRI,
     output reg [`Word] ALURes,
-    output ExcOccur,
-    output [4:0] ExcCode,
-    output Zero
+    output ExcOccur
 );
 
     wire [`Word] leading_zero_result;
@@ -19,7 +22,7 @@ module ALU(
 
     wire [32:0] ADD_Res_Temp = {SrcA[31],SrcA} + {SrcB[31],SrcB};
     wire [32:0] SUB_Res_Temp = {SrcA[31],SrcA} - {SrcB[31],SrcB};
-    
+
     always @( * )
         begin
             case (ALUCtrl)
@@ -40,7 +43,6 @@ module ALU(
                 default  : ALURes <= SrcA;
             endcase
         end
-    assign Zero=(ALURes==0)?1'b1:1'b0;
 
     leading_zero_counter _leading_zero_counter(
         .in(SrcA),
@@ -56,7 +58,6 @@ module ALU(
                              (ALUCtrl==`ALU_SUB && SUB_Res_Temp[32]!=SUB_Res_Temp[31]))
                              ?1'b1:1'b0;
     assign ExcOccur = (~IgnoreExcRI && ADD_SUB_Overflow)?1'b1:1'b0;
-    assign ExcCode = ExcOccur?`EXC_OV:5'b0;
 endmodule //
 
 module leading_zero_counter(

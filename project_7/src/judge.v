@@ -1,3 +1,9 @@
+/*
+ * name: Judge
+ * author: btapple
+ * description: comparator
+ */
+
 `ifndef __JUDGE_V__
 `define __JUDGE_V__
 `include "./macro.vh"

@@ -1,3 +1,9 @@
+/*
+ * name: memory
+ * author: btapple
+ * description: memory
+ */
+
 `ifndef __MEMORY_V__
 `define __MEMORY_V__
 `include "./macro.vh"

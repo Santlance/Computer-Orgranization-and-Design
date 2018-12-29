@@ -1,3 +1,9 @@
+/*
+ * name: IM
+ * author: btapple
+ * description: instruction memory.
+ */
+
 `ifndef __IM_V__
 `define __IM_V__
 `include "./macro.vh"

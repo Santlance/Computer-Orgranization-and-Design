@@ -29,22 +29,9 @@ module MEM_WB(
     output reg [3:0] MemRDSelW,
     output reg [1:0] ByteSelW,
     output reg [`Word] RegDataW,
-    output reg [4:0] RegAddrW,
-
-    input [`Word] PCM,
-    output reg [`Word] PCW
+    output reg [4:0] RegAddrW
 );
-    initial
-    begin
-        MemtoRegW<=0;
-        RegWriteW<=0;
-        MemRDW<=0;
-        RegDataW<=0;
-        RegAddrW<=0;
-        MemRDSelW<=0;
-        ByteSelW<=0;
-        PCW<=0;
-    end
+
     always @(posedge clk)
     begin
         if(reset)
@@ -56,7 +43,6 @@ module MEM_WB(
                 RegAddrW<=0;
                 MemRDSelW<=0;
                 ByteSelW<=0;
-                PCW<=0;
             end
         else if(stall!=1)
             if(clr)
@@ -68,7 +54,6 @@ module MEM_WB(
                     RegAddrW<=0;
                     MemRDSelW<=0;
                     ByteSelW<=0;
-                    PCW<=PCM;
                 end
             else
                 begin
@@ -79,7 +64,6 @@ module MEM_WB(
                     RegAddrW<=RegAddrM;
                     MemRDSelW<=MemRDSelM;
                     ByteSelW<=ByteSelM;
-                    PCW<=PCM;
                 end
     end
 endmodule // MEM_WB

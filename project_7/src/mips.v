@@ -1,3 +1,9 @@
+/*
+ * name: mips
+ * author: btapple
+ * description: top module
+ */
+
 `ifndef __MIPS_V__
 `define __MIPS_V__
 `include "./macro.vh"
@@ -11,7 +17,7 @@ module mips(
     input clk,
     input reset
 );
-    wire clk_re=~clk;
+    wire clk_re = ~clk;
 
     wire [`Word] PrRD;
     wire [`Word] PrAddr,Addr;
@@ -53,8 +59,7 @@ module mips(
         .PC(PC)
     );
 
-    memory #(14) _memoey
-    (
+    memory _memory(
         .clk(clk_re),
         .reset(reset),
         .we(MEMWE),

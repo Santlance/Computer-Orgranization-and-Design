@@ -27,10 +27,10 @@ module Branch(
         .out(branch_imm)
     );
 
-    assign pc_branch = Branch && JudgeRes;
-    assign B_addr=branch_imm+PC4;
-    assign J_addr={PC4[31:28],J_Index,2'b00};
-    assign PC8=PC4+4;
+    assign pc_branch = Branch & JudgeRes;
+    assign B_addr = branch_imm + PC4;
+    assign J_addr = {PC4[31:28],J_Index,2'b00};
+    assign PC8 = PC4 + 4;
     
 endmodule // Branch
 `endif
